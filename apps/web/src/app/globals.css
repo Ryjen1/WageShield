@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light dark;
+}
+
+html, body {
+  @apply bg-ink-50 text-ink-900;
+  -webkit-font-smoothing: antialiased;
+}
+
+@media (prefers-color-scheme: dark) {
+  html, body {
+    @apply bg-ink-900 text-ink-50;
+  }
+}
+
+/* Subpoena scene typography — slightly tighter, monospace for the receipts. */
+.receipt {
+  @apply font-mono text-sm leading-6 bg-ink-900 text-evidence-400 p-4 rounded-lg overflow-auto;
+}

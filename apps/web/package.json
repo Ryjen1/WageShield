@@ -1,11 +1,35 @@
 {
   "name": "@wageshield/web",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
-  "description": "WageShield web app — Next.js 15 + @cofhe/react. Worker / attorney / regulator views.",
+  "description": "WageShield web app — Next.js + wagmi + @cofhe/sdk. Worker / attorney / regulator views.",
   "license": "MIT",
   "scripts": {
-    "dev": "echo 'web app coming in Wave 5' && exit 0",
-    "build": "echo 'web app coming in Wave 5' && exit 0"
+    "dev": "next dev -p 3000",
+    "build": "next build",
+    "start": "next start -p 3000",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@cofhe/sdk": "^0.5.1",
+    "@tanstack/react-query": "^5.51.0",
+    "@wageshield/sdk": "*",
+    "next": "^14.2.5",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "viem": "^2.21.0",
+    "wagmi": "^2.12.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "autoprefixer": "^10.4.19",
+    "eslint": "^8",
+    "eslint-config-next": "^14.2.5",
+    "postcss": "^8.4.39",
+    "tailwindcss": "^3.4.7",
+    "typescript": "^5.5.4"
   }
 }
