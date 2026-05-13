@@ -17,6 +17,9 @@
     "e2e:arb-sepolia": "hardhat run scripts/e2e-live.ts --network arb-sepolia",
     "check-deployer:arb-sepolia": "hardhat run scripts/check-deployer.ts --network arb-sepolia"
   },
+  "dependencies": {
+    "@wageshield/sdk": "*"
+  },
   "devDependencies": {
     "@cofhe/hardhat-plugin": "^0.5.1",
     "@cofhe/mock-contracts": "^0.5.1",

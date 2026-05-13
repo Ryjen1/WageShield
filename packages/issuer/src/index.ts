@@ -5,17 +5,17 @@
  * ------------
  * A standalone HTTP API that mimics what a real third-party time-tracking platform
  * (Homebase, 7shifts, When-I-Work) or a worker-center co-op signer would expose: an
- * endpoint that, given (worker address, employer ID, hours, hourly rate, work period),
+ * endpoint that, given (worker address, employer label, hours, hourly rate, work period),
  * returns an EIP-712 signed `TimeclockAttestation` struct. The struct's signer is the
  * server's `ISSUER_PRIVATE_KEY`.
  *
  * What this isn't
  * ---------------
  * Real authentication — there is no login, no JWT, no rate limit, no abuse prevention.
- * In production, this service would (1) authenticate the requesting worker via OAuth
- * to the upstream time-tracking platform, (2) fetch their canonical hours/rate from the
- * platform's authoritative API, and (3) sign only what the platform vouches for. Here we
- * trust whatever JSON the worker's UI hands us, because the demo's threat model is
+ * In production this would (1) authenticate the requesting worker via OAuth into the
+ * upstream time-tracking platform, (2) fetch their canonical hours/rate from the
+ * platform's authoritative API, and (3) sign only what the platform vouches for. Here
+ * we trust whatever JSON the worker's UI hands us, because the demo's threat model is
  * **the chain not knowing who/what is being claimed**, not the issuer's own validation.
  *
  * Trust model
@@ -34,6 +34,13 @@ import { readFileSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import { config as dotenvConfig } from "dotenv";
+import {
+  buildAttestation,
+  buildAttestationDomain,
+  signAttestation,
+  hashEmployerLabel,
+  type Address,
+} from "@wageshield/sdk";
 
 // --------------------------------------------------------------------------------
 //  Env loading — auto-discover the monorepo root and load .env.local / .env from it
@@ -87,35 +94,20 @@ if (!ISSUER_PK || !ISSUER_PK.startsWith("0x")) {
 }
 if (!WAGECLAIM_ADDRESS || !ethers.isAddress(WAGECLAIM_ADDRESS)) {
   console.error(
-    "FATAL: WAGECLAIM_ADDRESS env var must be the deployed WageClaim contract address."
+    "FATAL: WAGECLAIM_ADDRESS env var (or deployments record) must yield a valid contract address."
   );
   process.exit(1);
 }
 
 const wallet = new ethers.Wallet(ISSUER_PK);
+const domain = buildAttestationDomain({
+  chainId: CHAIN_ID,
+  wageClaimAddress: WAGECLAIM_ADDRESS as Address,
+});
+
 console.log(`[issuer] Signing as: ${wallet.address}`);
 console.log(`[issuer] WageClaim:  ${WAGECLAIM_ADDRESS}`);
-console.log(`[issuer] Chain:      ${CHAIN_ID}`);
-
-const DOMAIN = {
-  name: "WageShield.WageClaim",
-  version: "1",
-  chainId: CHAIN_ID,
-  verifyingContract: WAGECLAIM_ADDRESS,
-} as const;
-
-const TYPES = {
-  TimeclockAttestation: [
-    { name: "worker", type: "address" },
-    { name: "employerId", type: "bytes32" },
-    { name: "hoursWorked", type: "uint64" },
-    { name: "hourlyRateCents", type: "uint32" },
-    { name: "periodStart", type: "uint64" },
-    { name: "periodEnd", type: "uint64" },
-    { name: "issuedAt", type: "uint64" },
-    { name: "nonce", type: "bytes32" },
-  ],
-} as const;
+console.log(`[issuer] Network:    ${NETWORK} (chainId ${CHAIN_ID})`);
 
 // --------------------------------------------------------------------------------
 //  Validation
@@ -123,18 +115,15 @@ const TYPES = {
 
 const AttestRequest = z.object({
   worker: z.string().refine(ethers.isAddress, "worker must be a valid address"),
-  /** Plaintext employer identifier; the contract hashes this with keccak256. */
-  employerId: z
+  employerLabel: z
     .string()
     .min(1)
-    .max(256, "employerId too long")
+    .max(256, "employerLabel too long")
     .describe("plaintext employer label, e.g. EIN-12-3456789"),
-  /** Hours worked in the period. uint64. */
   hoursWorked: z
     .union([z.string(), z.number(), z.bigint()])
     .transform((v) => BigInt(v))
     .refine((v) => v >= 0n && v <= 0xffffffffffffffffn, "uint64 range"),
-  /** Hourly rate in **cents** (US$). uint32. */
   hourlyRateCents: z
     .union([z.string(), z.number(), z.bigint()])
     .transform((v) => Number(v))
@@ -142,12 +131,10 @@ const AttestRequest = z.object({
       (v) => Number.isInteger(v) && v >= 0 && v <= 0xffffffff,
       "uint32 range"
     ),
-  /** Period start, unix seconds. uint64. */
   periodStart: z
     .union([z.string(), z.number(), z.bigint()])
     .transform((v) => BigInt(v))
     .refine((v) => v > 0n && v <= 0xffffffffffffffffn, "uint64 range"),
-  /** Period end, unix seconds. uint64. */
   periodEnd: z
     .union([z.string(), z.number(), z.bigint()])
     .transform((v) => BigInt(v))
@@ -168,8 +155,9 @@ app.get("/health", (_req, res) => {
     ok: true,
     issuer: wallet.address,
     wageClaim: WAGECLAIM_ADDRESS,
+    network: NETWORK,
     chainId: CHAIN_ID,
-    domain: DOMAIN,
+    domain,
   });
 });
 
@@ -179,22 +167,18 @@ app.get("/health", (_req, res) => {
  * Request body:
  *   {
  *     worker: "0x...",
- *     employerId: "EIN-12-3456789",
+ *     employerLabel: "EIN-12-3456789",
  *     hoursWorked: 240,
  *     hourlyRateCents: 1500,
  *     periodStart: 1746230400,
  *     periodEnd:   1748908800
  *   }
  *
- * Response:
- *   {
- *     attestation: {
- *       worker, employerId (bytes32), hoursWorked, hourlyRateCents,
- *       periodStart, periodEnd, issuedAt, nonce
- *     },
- *     signature: "0x...",      // 65 bytes
- *     signer: "0x..."           // wallet address (must match registry entry)
- *   }
+ * Response: a `SignedAttestation` from @wageshield/sdk.
+ *
+ * Bigint fields are JSON-serialised as strings (`hoursWorked`, `periodStart`, etc.)
+ * because JSON does not support `bigint` natively. Clients must `BigInt(...)` them
+ * before passing into `submitClaim`.
  */
 app.post("/attest", async (req: Request, res: Response) => {
   const parsed = AttestRequest.safeParse(req.body);
@@ -206,41 +190,42 @@ app.post("/attest", async (req: Request, res: Response) => {
   if (v.periodEnd <= v.periodStart) {
     return res.status(400).json({ error: "period_end_must_exceed_period_start" });
   }
-  // Hash the employer label to a 32-byte commitment (the same way WageClaim does on-chain).
-  const employerIdBytes32 = ethers.id(v.employerId); // keccak256(utf8 bytes)
 
-  const issuedAt = BigInt(Math.floor(Date.now() / 1000));
-  const nonce = ethers.hexlify(ethers.randomBytes(32));
-
-  const message = {
-    worker: v.worker,
-    employerId: employerIdBytes32,
+  // Pure-function builder — same code path the worker would use locally if they had
+  // direct access to a trusted issuer's signing key.
+  const attestation = buildAttestation({
+    worker: v.worker as Address,
+    employerLabel: v.employerLabel,
     hoursWorked: v.hoursWorked,
     hourlyRateCents: v.hourlyRateCents,
     periodStart: v.periodStart,
     periodEnd: v.periodEnd,
-    issuedAt,
-    nonce,
-  };
+  });
 
-  const signature = await wallet.signTypedData(DOMAIN, TYPES, message);
-  const digest = ethers.TypedDataEncoder.hash(DOMAIN, TYPES, message);
+  const signed = await signAttestation({
+    signer: wallet,
+    domain,
+    attestation,
+  });
 
+  // Serialise bigints as strings so JSON.stringify works.
   return res.json({
     attestation: {
-      worker: message.worker,
-      employerId: message.employerId,
-      hoursWorked: message.hoursWorked.toString(),
-      hourlyRateCents: message.hourlyRateCents,
-      periodStart: message.periodStart.toString(),
-      periodEnd: message.periodEnd.toString(),
-      issuedAt: message.issuedAt.toString(),
-      nonce: message.nonce,
+      worker: signed.attestation.worker,
+      employerId: signed.attestation.employerId,
+      hoursWorked: signed.attestation.hoursWorked.toString(),
+      hourlyRateCents: signed.attestation.hourlyRateCents,
+      periodStart: signed.attestation.periodStart.toString(),
+      periodEnd: signed.attestation.periodEnd.toString(),
+      issuedAt: signed.attestation.issuedAt.toString(),
+      nonce: signed.attestation.nonce,
     },
-    signature,
-    signer: wallet.address,
-    digest,
-    domain: DOMAIN,
+    signature: signed.signature,
+    signer: signed.signer,
+    digest: signed.digest,
+    domain: signed.domain,
+    /** Convenience: the same hash the contract derives from `employerLabel`. */
+    employerCommitment: hashEmployerLabel(v.employerLabel),
   });
 });
 

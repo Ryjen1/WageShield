@@ -12,6 +12,7 @@
     "build": "tsc -p tsconfig.json"
   },
   "dependencies": {
+    "@wageshield/sdk": "*",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "ethers": "^6.4.0",
