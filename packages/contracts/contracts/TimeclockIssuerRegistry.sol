@@ -7,8 +7,8 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 /// @title TimeclockIssuerRegistry
 /// @notice Registry of trusted timeclock VC issuers (mock Homebase / 7shifts / When-I-Work /
 ///         worker-center signers). Owner-managed in v1.
-/// @dev v2 moves to 5-of-7 quorum + 7-day timelock (24h expedited revoke) as documented in
-///      docs/trust-list-governance.md, matching the Compass governance pattern.
+/// @dev v2 moves to a 5-of-7 quorum + 7-day timelock (24h expedited revoke) as
+///      documented in docs/trust-list-governance.md.
 contract TimeclockIssuerRegistry is ITimeclockIssuerRegistry, Ownable {
     /// @notice Issuer address => trust flag.
     mapping(address => bool) private _trusted;

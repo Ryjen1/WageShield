@@ -87,24 +87,27 @@ aggregates.
 
 ---
 
-## What's the upgrade vs. existing private-claim dApps?
+## Why FHE specifically
 
-The closest pattern in the wild is **Compass-OG** (0G APAC Hackathon, Track 5 winner) —
-a private eligibility firewall for HK migrant domestic workers using SD-JWT VCs +
-Phala TDX (Intel TEE) + 0G chain. Compass is excellent. Its honest-limits document
-flags one structural weakness:
+Most privacy-preserving systems today rely on either **ZK proofs** (which reveal
+the assertion to a verifier) or **TEE-based confidential compute** (which
+outsources trust to a hardware vendor's attestation chain and an off-chain enclave
+operator). Neither composes cleanly with cross-worker aggregation:
 
-> **On-chain `verifyAttestation`: stubbed** — gas-prohibitive on-chain (cert chain +
-> ECDSA + 4KB quote); off-chain via CLI is the honest substitute.
+- **ZK** requires a joint proof from every contributor — impossible when workers
+  submit independently across days, weeks, and jurisdictions.
+- **TEE** requires every contributor to trust the same enclave operator with their
+  plaintext. The moment that operator is subpoenaed, the privacy collapses
+  retroactively for every worker who ever submitted.
 
-That's the TEE problem in a nutshell: you trust **Intel + the enclave operator + the
-attestation chain freshness**. WageShield removes that whole pillar. The policy
-evaluator runs **directly on Fhenix CoFHE — encrypted EVM, no TEE, no enclave, no
-Intel**. The trust assumption shrinks from *"Intel and Phala remain honest"* to
-*"FHE soundness holds"*.
+WageShield's per-employer aggregate is computed as `FHE.add` across each worker's
+independently-submitted ciphertext. No joint proof. No shared enclave. No vendor
+attestation. The chain operator, the contract owner, and every other observer see
+only ciphertexts until a permit holder decrypts off-chain — and even then, only
+their authorised slice.
 
-We're not the first private-claim primitive. We're the first one where you don't have
-to trust a chip vendor.
+The trust assumption is *"FHE soundness holds"* — that's it. No chip vendor, no
+enclave operator, no off-chain attestation chain.
 
 ---
 
@@ -384,8 +387,6 @@ Target networks: **Arbitrum Sepolia** (primary), Ethereum Sepolia, Base Sepolia.
   Paychecks Each Year*, EPI 2017 — $50B/yr lower-bound, 75% of low-wage workers affected.
 - **Filing-rate gap:** Bobo, *Wage Theft in America*, 2014 — <1% of victims file
   claims, primarily due to retaliation + immigration fear.
-- **Compass-OG-** (precedent pattern, 0G hackathon Track 5):
-  https://github.com/StephenSook/Compass-OG-
 - **Fhenix CoFHE docs:** https://cofhe-docs.fhenix.zone
 - **Privara/ReineiraOS:** https://github.com/ReineiraOS/reineira-code
 

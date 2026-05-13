@@ -49,9 +49,8 @@ contract WageClaim is EIP712 {
         "TimeclockAttestation(address worker,bytes32 employerId,uint64 hoursWorked,uint32 hourlyRateCents,uint64 periodStart,uint64 periodEnd,uint64 issuedAt,bytes32 nonce)"
     );
 
-    /// @notice Granularity of the public timestamp bucket (seconds). 15 minutes by default,
-    ///         matching the Compass receipt-bucketing pattern. Larger buckets = stronger
-    ///         k-anonymity at the cost of resolution.
+    /// @notice Granularity of the public timestamp bucket (seconds). 15 minutes by default.
+    ///         Larger buckets = stronger k-anonymity at the cost of resolution.
     uint64 public constant TIMESTAMP_BUCKET = 15 minutes;
 
     /// @notice Maximum tolerated clock drift between the issuer signature and on-chain time.

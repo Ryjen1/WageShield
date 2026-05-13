@@ -57,20 +57,23 @@ export default function AboutPage() {
         </p>
       </Section>
 
-      <Section title="Differentiator vs Compass-OG">
+      <Section title="Why this is hard without FHE">
         <p className="text-ink-700 dark:text-ink-200">
-          <ExternalLink href="https://github.com/StephenSook/Compass-OG-">
-            Compass-OG-
-          </ExternalLink>{" "}
-          is the spiritual cousin of WageShield (private eligibility firewall on 0G,
-          Phala TDX + SD-JWT VCs). Its honest-limits document flags one structural
-          weakness:{" "}
-          <em>
-            on-chain attestation verification is gas-prohibitive, so the TEE quote is
-            verified off-chain
-          </em>
-          . WageShield removes the TEE entirely. The policy evaluator runs in encrypted
-          EVM — no Intel, no enclave operator, no off-chain attestation chain.
+          Most privacy-preserving systems today rely on either{" "}
+          <strong>ZK proofs</strong> (which reveal the assertion to a verifier) or{" "}
+          <strong>TEE-based confidential compute</strong> (which outsources trust to a
+          hardware vendor's attestation chain and an off-chain enclave operator).
+          Neither composes cleanly with cross-worker aggregation: ZK requires a joint
+          proof from every contributor, and TEE requires every contributor to trust the
+          same enclave operator with their plaintext.
+        </p>
+        <p className="text-ink-700 dark:text-ink-200">
+          WageShield's per-employer aggregate exposure is computed as{" "}
+          <Code>FHE.add</Code> across each worker's independently-submitted ciphertext.
+          No joint proof. No shared enclave. No vendor attestation. The chain operator,
+          the contract owner, and every other observer see only ciphertexts until a
+          permit holder decrypts off-chain — and even then, only their authorised
+          slice.
         </p>
       </Section>
 
@@ -125,21 +128,3 @@ function Code({ children }: { children: React.ReactNode }) {
   );
 }
 
-function ExternalLink({
-  href,
-  children,
-}: {
-  href: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noreferrer"
-      className="text-seal-500 underline hover:text-seal-600"
-    >
-      {children}
-    </a>
-  );
-}
