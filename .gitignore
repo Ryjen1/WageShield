@@ -1,0 +1,45 @@
+# --------------------------------------------------------------------------------
+#  WageShield .gitignore
+# --------------------------------------------------------------------------------
+
+# Node / npm / pnpm
+node_modules/
+.npm/
+*.log
+npm-debug.log*
+.pnpm-store/
+
+# Environment / secrets — NEVER commit
+.env
+.env.local
+.env.*.local
+
+# Hardhat generated artifacts
+**/artifacts/
+**/cache/
+**/coverage/
+**/coverage.json
+**/typechain-types/
+
+# Build outputs
+**/dist/
+**/.next/
+**/out/
+
+# IDE / OS
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# tsx / ts-node cache
+.tsbuildinfo
+
+# Local-only deployment records (per-developer, transient)
+**/deployments/*.local.json
+
+# Tooling caches
+.eslintcache
+.prettiercache

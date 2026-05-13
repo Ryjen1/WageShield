@@ -1,0 +1,25 @@
+{
+  "$schema": "https://kilo.ai/schema/kilo.json",
+  "project": {
+    "name": "WageShield",
+    "description": "Confidential wage-theft claims on Fhenix CoFHE — a Privara-native plugin (resolver + underwriter policy + claim contract) that lets workers file encrypted claims without disclosing identity, hours, rate, or owed amount.",
+    "track": "Fhenix Privacy-by-Design Buildathon (Wave 4 + 5)",
+    "status": "wave-4-build"
+  },
+  "stack": {
+    "contracts": "Solidity 0.8.28 (viaIR, cancun) + @fhenixprotocol/cofhe-contracts + Privara IConditionResolver/IUnderwriterPolicy",
+    "tests": "Hardhat + @cofhe/hardhat-plugin + @cofhe/sdk (mock environment)",
+    "issuer": "Express + @noble/curves secp256k1 EIP-712 signer (mock timeclock VC)",
+    "sdk": "TypeScript wrapper over @cofhe/sdk + ethers v6",
+    "web": "Next.js 15 + @cofhe/react"
+  },
+  "networks": [
+    "arb-sepolia",
+    "eth-sepolia",
+    "base-sepolia"
+  ],
+  "milestones": {
+    "wave-4-submission": "2026-05-19",
+    "wave-5-final": "2026-06-01"
+  }
+}

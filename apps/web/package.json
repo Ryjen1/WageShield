@@ -1,0 +1,11 @@
+{
+  "name": "@wageshield/web",
+  "version": "0.0.0",
+  "private": true,
+  "description": "WageShield web app — Next.js 15 + @cofhe/react. Worker / attorney / regulator views.",
+  "license": "MIT",
+  "scripts": {
+    "dev": "echo 'web app coming in Wave 5' && exit 0",
+    "build": "echo 'web app coming in Wave 5' && exit 0"
+  }
+}

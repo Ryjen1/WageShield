@@ -1,0 +1,31 @@
+{
+  "name": "wageshield",
+  "version": "0.1.0",
+  "private": true,
+  "description": "WageShield monorepo — confidential wage-theft claims on Fhenix CoFHE. Privara-native plugin (resolver + policy + claim contract).",
+  "license": "MIT",
+  "workspaces": [
+    "packages/contracts",
+    "packages/issuer",
+    "packages/sdk",
+    "apps/web"
+  ],
+  "scripts": {
+    "compile": "npm --workspace @wageshield/contracts run compile",
+    "test": "npm --workspace @wageshield/contracts run test",
+    "deploy:arb-sepolia": "npm --workspace @wageshield/contracts run deploy:arb-sepolia",
+    "register-issuer:arb-sepolia": "npm --workspace @wageshield/contracts run register-issuer:arb-sepolia",
+    "e2e:arb-sepolia": "npm --workspace @wageshield/contracts run e2e:arb-sepolia",
+    "issuer:dev": "npm --workspace @wageshield/issuer run dev",
+    "issuer:serve": "npm --workspace @wageshield/issuer run serve",
+    "build": "npm run -ws --if-present build",
+    "lint": "npm run -ws --if-present lint",
+    "clean": "npm run -ws --if-present clean && rimraf node_modules"
+  },
+  "devDependencies": {
+    "rimraf": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
