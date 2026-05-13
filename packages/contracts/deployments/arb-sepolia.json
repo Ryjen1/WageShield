@@ -1,0 +1,18 @@
+{
+  "network": "arb-sepolia",
+  "chainId": "421614",
+  "deployer": "0x1852EBfaBA9CA73bd19760542B5Ab7278F495d0E",
+  "contracts": {
+    "TimeclockIssuerRegistry": "0xB0b85AF6f8ed8cee97D321d4B0FE15428cB0268f",
+    "WageClaim": "0x93D7Be555723CCbC964761087C644368049a5AE3",
+    "WageTheftResolver": "0xc3022f3De7043261DaccdCd1C9Ea8e4BB05ADb53",
+    "WageTheftPolicy": "0x4ce036ea7AF8ED9c187d0d69e52621EdE6d70F42"
+  },
+  "metadata": {
+    "deployedAt": "2026-05-13T11:05:58.814Z",
+    "issuerRegistered": {
+      "address": "0x8335bf7fac9786d1877b6E6c613458B4968C8146",
+      "label": "Mock Homebase"
+    }
+  }
+}
