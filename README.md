@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="apps/web/public/brand/banner-1500x500.png" alt="WageShield — Recover stolen wages without revealing who you are." width="100%">
+</p>
+
 # WageShield — Confidential Wage-Theft Claims on Fhenix
 
 > **Recover stolen wages without revealing who you are.**
