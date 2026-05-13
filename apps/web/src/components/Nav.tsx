@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { WalletButton } from "./WalletButton";
 
@@ -16,9 +17,18 @@ export function Nav() {
   return (
     <header className="border-b border-ink-200 dark:border-ink-700 bg-ink-50 dark:bg-ink-900 sticky top-0 z-10">
       <nav className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
-        <Link href="/" className="font-semibold text-lg tracking-tight">
-          WageShield <span className="text-seal-500">·</span>{" "}
-          <span className="font-mono text-xs text-ink-500">v0.1</span>
+        <Link href="/" className="flex items-center gap-2 group" aria-label="WageShield home">
+          <Image
+            src="/brand/mark.svg"
+            alt=""
+            width={28}
+            height={28}
+            priority
+          />
+          <span className="font-semibold text-lg tracking-tight">
+            Wage<span className="text-seal-500">Shield</span>
+          </span>
+          <span className="font-mono text-xs text-ink-500 ml-1">v0.1</span>
         </Link>
         <div className="flex items-center gap-6">
           <ul className="flex gap-4 text-sm">
