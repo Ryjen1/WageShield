@@ -1,12 +1,23 @@
 /**
- * @wageshield/sdk — placeholder.
+ * @wageshield/sdk
  *
- * This package will export:
- *   • `buildAttestation()` — typed-data builder for the issuer EIP-712 struct.
- *   • `submitClaim()` — high-level wrapper that encrypts inputs + sends the tx.
- *   • `decryptOwed()` — permit-flow helper for worker / attorney decryption.
- *   • `decryptAggregate()` — regulator-side aggregate decryption.
+ * Client SDK for WageShield: confidential wage-theft claims on Fhenix CoFHE.
  *
- * Implementation lands in Wave 5 once the contract surface is final.
+ * Public surface:
+ *   • Types — `TimeclockAttestation`, `SignedAttestation`, `SubmitClaimResult`, …
+ *   • Attestation — `buildAttestationDomain`, `buildAttestation`, `signAttestation`,
+ *                   `attestationDigest`, `hashEmployerLabel`, `recoverAttestationSigner`.
+ *   • CoFHE client — `createWageShieldClient`, `resolveCofheChain`.
+ *   • Claim flow — `submitClaim`, `decryptOwed`, `decryptHoursAndRate`,
+ *                  `decryptAggregate`, `readClaimMeta`, `grantAttorneyAccess`,
+ *                  `requestAggregateDecryption`, `parseClaimSubmittedEvent`.
+ *   • Constants — `WAGECLAIM_ABI`, `ATTESTATION_TYPES`, `SDK_VERSION`.
  */
-export const SDK_VERSION = "0.0.0";
+
+export const SDK_VERSION = "0.1.0";
+
+export * from "./types";
+export * from "./attestation";
+export * from "./client";
+export * from "./claim";
+export { WAGECLAIM_ABI } from "./abi";

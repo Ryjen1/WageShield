@@ -1,15 +1,23 @@
 {
   "name": "@wageshield/sdk",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
-  "description": "WageShield client SDK — claim builder, attestation typed-data, CoFHE permit helpers. Wraps @cofhe/sdk + ethers v6.",
+  "description": "WageShield client SDK — attestation typed-data builder, claim submission, CoFHE permit-gated decryption helpers. Wraps @cofhe/sdk + ethers v6.",
   "license": "MIT",
-  "type": "module",
   "main": "src/index.ts",
   "types": "src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "require": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "clean": "rimraf dist"
+    "clean": "rimraf dist",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
     "@cofhe/sdk": "^0.5.1",

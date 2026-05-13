@@ -35,7 +35,7 @@ npm-debug.log*
 Thumbs.db
 
 # tsx / ts-node cache
-.tsbuildinfo
+*.tsbuildinfo
 
 # Local-only deployment records (per-developer, transient)
 **/deployments/*.local.json
