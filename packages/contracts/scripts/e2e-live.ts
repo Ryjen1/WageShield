@@ -26,13 +26,13 @@ import * as path from "path";
 import {
   buildAttestation,
   buildAttestationDomain,
-  createWageShieldClient,
   decryptOwed,
   signAttestation,
   submitClaim,
   type Address,
   type SupportedNetwork,
 } from "@wageshield/sdk";
+import { createWageShieldClient } from "@wageshield/sdk/node";
 
 async function main() {
   // ------- 1. Load deployment + signers ------------------------------------
