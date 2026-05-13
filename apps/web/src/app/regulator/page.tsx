@@ -79,6 +79,7 @@ export default function RegulatorPage() {
     }
   }
 
+  if (cfg.configError) return <Hint tone="error">{cfg.configError}</Hint>;
   if (!isConnected) return <Hint>Connect a registered regulator wallet.</Hint>;
   if (connecting) return <Hint>Setting up encrypted compute…</Hint>;
   if (cofheError) return <Hint tone="error">CoFHE error: {cofheError}</Hint>;

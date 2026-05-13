@@ -166,6 +166,7 @@ export default function WorkerPage() {
     }
   }
 
+  if (cfg.configError) return <Hint tone="error">{cfg.configError}</Hint>;
   if (!isConnected) {
     return <Hint>Connect your wallet to file a claim.</Hint>;
   }

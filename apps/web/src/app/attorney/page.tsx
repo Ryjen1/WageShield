@@ -72,6 +72,7 @@ export default function AttorneyPage() {
     }
   }
 
+  if (cfg.configError) return <Hint tone="error">{cfg.configError}</Hint>;
   if (!isConnected) {
     return (
       <Hint>
