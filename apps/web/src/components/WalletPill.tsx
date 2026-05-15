@@ -5,7 +5,6 @@ import {
   useAccount,
   useConnect,
   useDisconnect,
-  useChainId,
   useSwitchChain,
 } from "wagmi";
 import { getAppConfig } from "@/lib/config";
@@ -13,24 +12,32 @@ import { getAppConfig } from "@/lib/config";
 /**
  * Wallet pill — three visible states:
  *  - disconnected: "Connect" pill → opens a wallet chooser
- *  - connected, wrong chain: red pill, click to switch chains
- *  - connected, right chain: truncated address, click to disconnect
+ *  - connected, wrong chain: TWO pills side-by-side — a red "Wrong chain"
+ *    action (clicking switches), and the address pill (clicking disconnects).
+ *    This is more useful than collapsing into a single red pill: the user can
+ *    still see they're connected as themselves, and choose to either switch
+ *    chain or disconnect entirely.
+ *  - connected, right chain: address pill only (clicking disconnects).
  *
- * The chooser is critical because multiple wallet extensions inject themselves
- * as `window.ethereum`. wagmi's EIP-6963 discovery lists each wallet as its own
- * connector, and we render them so the user explicitly picks (MetaMask vs
- * Binance vs Rabby vs whatever else is installed).
+ * Wallet picker: uses wagmi's EIP-6963 multi-injected discovery so each
+ * installed wallet shows up as its own connector entry. User picks explicitly
+ * (MetaMask vs Binance vs Rabby vs whatever else is installed).
+ *
+ * Implementation note: chain detection MUST come from `useAccount()` not
+ * `useChainId()`. `useChainId()` falls back to the wagmi-config default when
+ * the wallet is on an unsupported chain, hiding the mismatch. `useAccount()`
+ * returns the wallet's actual chainId regardless.
  */
 export function WalletPill() {
   const cfg = getAppConfig();
-  const { address, isConnected } = useAccount();
-  const chainId = useChainId();
+  const { address, isConnected, chainId: walletChainId } = useAccount();
   const { connect, connectors, isPending, error: connectError } = useConnect();
   const { disconnect } = useDisconnect();
-  const { switchChain, isPending: isSwitching } = useSwitchChain();
+  const { switchChain, isPending: isSwitching, error: switchError } = useSwitchChain();
 
   const [chooserOpen, setChooserOpen] = useState(false);
-  const wrongChain = isConnected && chainId !== cfg.chainId;
+  const wrongChain =
+    isConnected && walletChainId !== undefined && walletChainId !== cfg.chainId;
 
   // Close the chooser once a wallet successfully connects.
   useEffect(() => {
@@ -61,29 +68,30 @@ export function WalletPill() {
     );
   }
 
-  // ---------------------------------------------------------------- wrong chain
-  if (wrongChain) {
-    return (
-      <button
-        onClick={() => switchChain({ chainId: cfg.chainId })}
-        disabled={isSwitching}
-        className="font-mono text-[10px] tracking-[0.3em] uppercase rounded-full border border-alarm-500/50 text-alarm-500 px-4 py-1.5 hover:border-alarm-500 transition disabled:opacity-50"
-        title={`Switch wallet to ${cfg.network}`}
-      >
-        {isSwitching ? "Switching…" : "Switch chain"}
-      </button>
-    );
-  }
-
-  // ------------------------------------------------------------------ connected
+  // ------------------------------------------- connected, with optional warning
   return (
-    <button
-      onClick={() => disconnect()}
-      className="font-mono text-[10px] tracking-[0.3em] uppercase rounded-full border border-white/15 px-4 py-1.5 text-muted-foreground hover:text-foreground hover:border-white/40 transition"
-      title="Disconnect wallet"
-    >
-      {address?.slice(0, 6)}···{address?.slice(-4)}
-    </button>
+    <div className="flex items-center gap-2">
+      {wrongChain && (
+        <button
+          onClick={() => switchChain({ chainId: cfg.chainId })}
+          disabled={isSwitching}
+          className="font-mono text-[10px] tracking-[0.3em] uppercase rounded-full border border-alarm-500/60 bg-alarm-500/10 px-3 py-1.5 text-alarm-500 hover:bg-alarm-500/20 transition disabled:opacity-50"
+          title={
+            switchError?.message ??
+            `Wallet on chain ${walletChainId}, need ${cfg.chainId} (${cfg.network}). Click to switch.`
+          }
+        >
+          {isSwitching ? "Switching…" : `Wrong chain · Switch to ${cfg.network}`}
+        </button>
+      )}
+      <button
+        onClick={() => disconnect()}
+        className="font-mono text-[10px] tracking-[0.3em] uppercase rounded-full border border-white/15 px-4 py-1.5 text-muted-foreground hover:text-foreground hover:border-white/40 transition"
+        title="Disconnect wallet"
+      >
+        {address?.slice(0, 6)}···{address?.slice(-4)}
+      </button>
+    </div>
   );
 }
 
@@ -152,9 +160,6 @@ function WalletChooser({
                 className="w-full flex items-center gap-3 rounded-xl border border-white/[0.08] bg-black/30 hover:border-seal-400/60 hover:bg-seal-500/10 transition px-4 py-3 text-left disabled:opacity-50"
               >
                 {c.icon ? (
-                  // The EIP-6963 spec exposes a data-URI for each wallet's icon.
-                  // Render it as a plain <img> so we don't need a Next image-loader
-                  // configuration for arbitrary remote/data sources.
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={c.icon}
