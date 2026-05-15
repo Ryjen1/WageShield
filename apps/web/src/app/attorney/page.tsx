@@ -55,10 +55,19 @@ export default function AttorneyPage() {
         resolved: meta.resolved,
       });
     } catch (e: any) {
+      const msg: string = e?.message ?? String(e);
+      // The CoFHE threshold network returns HTTP 403 when the calling wallet
+      // doesn't have an ACL grant on the requested ciphertext. Different SDK
+      // versions phrase this slightly differently ("ACL denied", "Forbidden",
+      // "sealOutput request failed: HTTP 403", "access denied", etc.) so match
+      // broadly. The user-facing message has to make clear this is the system
+      // *working*, not a bug.
+      const isAccessDenied =
+        /\b(403|forbidden|acl|denied|unauthorized|not authorized)\b/i.test(msg);
       setError(
-        e?.message?.includes("ACL") || e?.message?.includes("denied")
-          ? "Decryption denied. Has the worker granted you access via grantAttorneyAccess?"
-          : e?.message ?? String(e),
+        isAccessDenied
+          ? "Access denied — this wallet has no permit for that claim. The worker must call grantAttorneyAccess(claimId, your-address) on-chain before you can decrypt. (This is the FHE access control working as designed.)"
+          : msg,
       );
     } finally {
       setBusy(false);

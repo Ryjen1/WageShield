@@ -71,7 +71,14 @@ export default function RegulatorPage() {
       });
       setAggCents(total);
     } catch (e: any) {
-      setError(e?.message ?? String(e));
+      const msg: string = e?.message ?? String(e);
+      const isAccessDenied =
+        /\b(403|forbidden|acl|denied|unauthorized|not authorized)\b/i.test(msg);
+      setError(
+        isAccessDenied
+          ? "Access denied — this regulator wallet has no permit for this employer's aggregate. Click '1 · Request access' first, wait for it to confirm on-chain, then try again."
+          : msg,
+      );
     } finally {
       setBusy(null);
     }

@@ -135,7 +135,14 @@ export default function WorkerPage() {
       });
       setDecryptedOwed(owed);
     } catch (e: any) {
-      setError(e?.message ?? String(e));
+      const msg: string = e?.message ?? String(e);
+      const isAccessDenied =
+        /\b(403|forbidden|acl|denied|unauthorized|not authorized)\b/i.test(msg);
+      setError(
+        isAccessDenied
+          ? "Access denied. The wallet currently connected isn't the one that filed this claim, so the FHE network refused the decrypt. Reconnect with the original submitting wallet."
+          : msg,
+      );
     } finally {
       setBusy(null);
     }
