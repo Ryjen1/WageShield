@@ -24,8 +24,11 @@ artifact a judge or reviewer needs to verify it themselves.
 | `WageClaim` | `0x93D7Be555723CCbC964761087C644368049a5AE3` | [Arbiscan](https://sepolia.arbiscan.io/address/0x93D7Be555723CCbC964761087C644368049a5AE3) |
 | `WageTheftResolver` | `0xc3022f3De7043261DaccdCd1C9Ea8e4BB05ADb53` | [Arbiscan](https://sepolia.arbiscan.io/address/0xc3022f3De7043261DaccdCd1C9Ea8e4BB05ADb53) |
 | `WageTheftPolicy` | `0x4ce036ea7AF8ED9c187d0d69e52621EdE6d70F42` | [Arbiscan](https://sepolia.arbiscan.io/address/0x4ce036ea7AF8ED9c187d0d69e52621EdE6d70F42) |
-| Deployer / owner | `0x1852EBfaBA9CA73bd19760542B5Ab7278F495d0E` | — |
 | Trusted issuer (mock Homebase) | `0x8335bf7fac9786d1877b6E6c613458B4968C8146` | — |
+
+> The deployer / contract-owner address is on-chain in the constructor of each
+> contract; if you need it for verification, query
+> `WageClaim.owner()` on Arbiscan.
 
 ## Reproducible end-to-end transaction
 

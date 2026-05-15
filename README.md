@@ -28,8 +28,11 @@ testnet** with one signed-and-decrypted real claim — see
 | `WageTheftResolver` | [`0xc3022f3De7043261DaccdCd1C9Ea8e4BB05ADb53`](https://sepolia.arbiscan.io/address/0xc3022f3De7043261DaccdCd1C9Ea8e4BB05ADb53) |
 | `WageTheftPolicy` | [`0x4ce036ea7AF8ED9c187d0d69e52621EdE6d70F42`](https://sepolia.arbiscan.io/address/0x4ce036ea7AF8ED9c187d0d69e52621EdE6d70F42) |
 
-Deployer / owner: `0x1852EBfaBA9CA73bd19760542B5Ab7278F495d0E`.
 Trusted issuer (mock Homebase): `0x8335bf7fac9786d1877b6E6c613458B4968C8146`.
+
+Any wallet on Arbitrum Sepolia can submit a claim — there's no allow-list of
+"workers". The issuer must be on the trusted-issuer registry, but the worker is
+whoever signs the transaction.
 
 **Live e2e proof:** [`0xacd2bb10f959326e49a03443381846ded2130bba9ad77c14ee9535d87158b162`](https://sepolia.arbiscan.io/tx/0xacd2bb10f959326e49a03443381846ded2130bba9ad77c14ee9535d87158b162)
 — issuer-attested `submitClaim` of 240 hours × $15.00, encrypted on-chain `FHE.mul`,

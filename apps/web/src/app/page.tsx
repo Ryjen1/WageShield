@@ -91,7 +91,7 @@ function Receipts() {
             tone="evidence"
             lines={[
               "claimId            : 4721",
-              "worker             : 0x1852...5d0E   (you)",
+              "worker             : 0x····...····   (you)",
               "hoursWorked        : 240",
               "hourlyRate         : $15.00",
               "owedCents          : 360000",
