@@ -50,7 +50,11 @@ export async function createWageShieldClient(args: {
   network: SupportedNetwork;
   provider: ethers.Provider;
   signer: ethers.Signer;
-}) {
+}): Promise<any> {
+  // Return type is `any` deliberately: the underlying CofheClient type lives in a
+  // private file of @cofhe/sdk that TypeScript can't reference portably across
+  // packages. The runtime contract is unchanged; consumers treat it as a CoFHE
+  // client and use its methods directly.
   const cofheChain = resolveCofheChain(args.network);
   const { publicClient, walletClient } = await Ethers6Adapter(
     args.provider as any,
