@@ -2,22 +2,110 @@
 @tailwind components;
 @tailwind utilities;
 
+/* --------------------------------------------------------------------------------
+ *  Theme tokens. Dark by default — that's the cinematic look. Light theme is
+ *  available via the `.light` class on <html> if we ever need it.
+ * -------------------------------------------------------------------------------- */
+
 :root {
-  color-scheme: light dark;
+  --background: #07080d;
+  --foreground: #f6f7f9;
+  --muted: #1a1d27;
+  --muted-foreground: #8b91a3;
+  --border: rgba(255, 255, 255, 0.08);
+  --card: rgba(255, 255, 255, 0.03);
+
+  color-scheme: dark;
+}
+
+html.light {
+  --background: #f6f7f9;
+  --foreground: #0f1320;
+  --muted: #e9ebf0;
+  --muted-foreground: #5a6378;
+  --border: rgba(15, 19, 32, 0.1);
+  --card: rgba(255, 255, 255, 0.7);
+
+  color-scheme: light;
 }
 
 html, body {
-  @apply bg-ink-50 text-ink-900;
+  background: var(--background);
+  color: var(--foreground);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-@media (prefers-color-scheme: dark) {
-  html, body {
-    @apply bg-ink-900 text-ink-50;
+body {
+  font-feature-settings: "ss01", "cv11";
+}
+
+/* --------------------------------------------------------------------------------
+ *  Reusable component classes.
+ * -------------------------------------------------------------------------------- */
+
+@layer components {
+  /* Liquid-glass surface — used for the nav pill + the receipt cards. */
+  .liquid-glass {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(20px) saturate(150%);
+    -webkit-backdrop-filter: blur(20px) saturate(150%);
+    border: 1px solid var(--border);
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.06);
+  }
+
+  /* Mono eyebrow label — the "10px / 0.3em / uppercase" we use above every section. */
+  .eyebrow {
+    @apply font-mono text-[10px] tracking-[0.3em] uppercase text-muted-foreground sm:text-xs;
+  }
+
+  /* Receipt block — mono, dark, monospaced, evidence-green text for decrypted facts. */
+  .receipt {
+    @apply font-mono text-sm leading-6 bg-black/40 text-evidence-400 p-5 rounded-2xl border border-white/[0.06] overflow-auto;
+  }
+
+  /* Pill button — the "rounded-full border" CTA we use everywhere instead of solid fills. */
+  .pill-btn {
+    @apply inline-flex items-center gap-2 rounded-full border border-white/20 px-6 py-3
+           font-mono text-[10px] tracking-[0.3em] uppercase text-foreground
+           transition-colors duration-200 hover:border-white/60
+           sm:text-xs sm:px-8 sm:py-4 disabled:opacity-40 disabled:cursor-not-allowed;
+  }
+
+  .pill-btn-primary {
+    @apply pill-btn border-seal-400/60 text-foreground hover:border-seal-400 hover:bg-seal-500/10;
+  }
+
+  .pill-btn-evidence {
+    @apply pill-btn border-evidence-400/60 hover:border-evidence-400 hover:bg-evidence-500/10;
+  }
+
+  .pill-btn-ghost {
+    @apply inline-flex items-center gap-2 font-mono text-[10px] tracking-[0.3em] uppercase
+           text-muted-foreground hover:text-foreground transition-colors sm:text-xs;
   }
 }
 
-/* Subpoena scene typography — slightly tighter, monospace for the receipts. */
-.receipt {
-  @apply font-mono text-sm leading-6 bg-ink-900 text-evidence-400 p-4 rounded-lg overflow-auto;
+/* --------------------------------------------------------------------------------
+ *  Cursor spotlight overlay — the radial gradient that follows the mouse.
+ * -------------------------------------------------------------------------------- */
+
+.cursor-spotlight {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -10;
+  background: radial-gradient(
+    420px circle at var(--x, 50%) var(--y, 50%),
+    rgba(255, 255, 255, 0.045),
+    transparent 45%
+  );
+  transition: background 50ms linear;
+}
+
+/* Reduced-motion accommodation. */
+@media (prefers-reduced-motion: reduce) {
+  .cursor-spotlight {
+    display: none;
+  }
 }

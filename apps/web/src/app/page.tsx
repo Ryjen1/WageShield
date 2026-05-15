@@ -1,104 +1,215 @@
-import Link from "next/link";
+import { AmbientShield } from "@/components/primitives/AmbientShield";
+import { BlurText } from "@/components/primitives/BlurText";
+import { Eyebrow } from "@/components/primitives/Eyebrow";
+import { PillButton } from "@/components/primitives/PillButton";
 
 export default function HomePage() {
   return (
-    <div className="space-y-12">
-      <section className="space-y-6">
-        <h1 className="text-5xl font-semibold tracking-tight">
-          Recover stolen wages.
-          <br />
-          <span className="text-seal-500">Without revealing who you are.</span>
-        </h1>
-        <p className="text-xl text-ink-500 max-w-2xl">
-          WageShield is a confidential wage-theft claims layer on Fhenix CoFHE.
-          Workers prove they're owed money — without disclosing their name,
-          immigration status, hours, or rate. Attorneys see the cases their clients
-          authorise. Regulators see employer-level totals. The chain sees nothing
-          identifying.
-        </p>
-        <div className="flex gap-3">
-          <Link
-            href="/worker"
-            className="bg-seal-600 hover:bg-seal-700 text-white px-5 py-3 rounded-lg font-medium"
-          >
-            File a claim →
-          </Link>
-          <Link
-            href="/about"
-            className="px-5 py-3 rounded-lg border border-ink-300 dark:border-ink-700"
-          >
-            How it works
-          </Link>
-        </div>
-      </section>
+    <>
+      <Hero />
+      <Receipts />
+      <StatRow />
+    </>
+  );
+}
 
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card
-          eyebrow="$50B/yr"
-          title="Stolen from US workers"
-          body="Lower-bound estimate (EPI 2017). 75% of low-wage workers experience some form of theft."
-        />
-        <Card
-          eyebrow="<1%"
-          title="File a claim"
-          body="The DOL's own filing process requires name + employer + dates — a recipe for retaliation."
-        />
-        <Card
-          eyebrow="$3,600"
-          title="Live testnet claim"
-          body="Encrypted on-chain in a single tx. The chain sees a commitment hash, not a dollar figure."
+/* --------------------------------------------------------------------------------
+ *  Hero — full viewport, ambient SVG, italic-serif emphasis on "identity".
+ * -------------------------------------------------------------------------------- */
+
+function Hero() {
+  return (
+    <section className="relative flex min-h-[100svh] flex-col items-center justify-center px-6 pt-24 pb-16 overflow-hidden">
+      <AmbientShield />
+
+      <Eyebrow className="relative z-10 mb-6 sm:mb-8">
+        Confidential wage-theft claims on Fhenix CoFHE
+      </Eyebrow>
+
+      <h1 className="relative z-10 max-w-4xl text-center text-3xl leading-tight font-medium text-foreground sm:text-5xl md:text-7xl tracking-tight">
+        <BlurText text="Recover stolen wages, without revealing identity." italicWords={["identity."]} />
+      </h1>
+
+      <p className="relative z-10 mt-8 max-w-2xl text-center text-sm text-muted-foreground sm:mt-10 sm:text-base md:text-lg leading-relaxed">
+        $50&nbsp;billion is stolen from US workers every year. Fewer than 1% file
+        claims — naming yourself in court of record is a recipe for retaliation.
+        WageShield lets a worker prove they're owed money, encrypted on-chain,
+        without disclosing who they are.
+      </p>
+
+      <div className="relative z-10 mt-10 flex flex-col items-center gap-3 sm:mt-12 sm:flex-row sm:flex-wrap sm:justify-center sm:gap-4">
+        <PillButton href="/worker" variant="primary">
+          File a claim
+        </PillButton>
+        <PillButton href="/about" variant="ghost">
+          How it works
+        </PillButton>
+        <PillButton
           href="https://sepolia.arbiscan.io/tx/0xb00687265c98de102ff83ba8e8e9ded8498272d20d660eafb8643060f3ddcb03"
+          variant="ghost"
+          arrow={false}
+        >
+          See the live tx ↗
+        </PillButton>
+      </div>
+    </section>
+  );
+}
+
+/* --------------------------------------------------------------------------------
+ *  Receipts — the "what a subpoena retrieves" scene + the "what the worker sees".
+ *  Cinematic split that visually proves the privacy claim.
+ * -------------------------------------------------------------------------------- */
+
+function Receipts() {
+  return (
+    <section className="relative px-6 py-24 sm:py-32 border-t border-white/[0.06]">
+      <div className="mx-auto max-w-5xl space-y-12">
+        <div className="space-y-3 max-w-2xl">
+          <Eyebrow>The shouldn't-be-possible moment</Eyebrow>
+          <h2 className="text-3xl font-medium tracking-tight sm:text-5xl">
+            When a court asks <span className="font-serif italic">who filed claim #4721,</span> this is what it gets.
+          </h2>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+          <ReceiptCard
+            label="Public — anyone, including a subpoena"
+            tone="muted"
+            lines={[
+              "claimId            : 4721",
+              "employerCommitment : 0xa46e...b3f2",
+              "timestampBucket    : 14:30 UTC ± 15 min",
+              "attestationDigest  : 0x7c9b...0e51",
+              "issuer             : 0x8335...8146   (Mock Homebase)",
+              "",
+              "/* no name. no employer. no amount. */",
+            ]}
+          />
+          <ReceiptCard
+            label="Worker — only this wallet, only with permit"
+            tone="evidence"
+            lines={[
+              "claimId            : 4721",
+              "worker             : 0x1852...5d0E   (you)",
+              "hoursWorked        : 240",
+              "hourlyRate         : $15.00",
+              "owedCents          : 360000",
+              "─────────────────────────────",
+              "amount owed        : $3,600.00",
+            ]}
+          />
+        </div>
+
+        <p className="text-sm text-muted-foreground max-w-2xl leading-relaxed">
+          Same on-chain claim. Two views. The chain stores ciphertexts, an employer
+          commitment hash, and a bucketed timestamp — nothing else. Decryption is
+          off-chain via CoFHE permits, scoped per role.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+function ReceiptCard({
+  label,
+  tone,
+  lines,
+}: {
+  label: string;
+  tone: "muted" | "evidence";
+  lines: string[];
+}) {
+  return (
+    <div className="liquid-glass rounded-2xl p-5 space-y-3">
+      <div className="flex items-center justify-between">
+        <Eyebrow>{label}</Eyebrow>
+        <span
+          className={`h-1.5 w-1.5 rounded-full ${
+            tone === "evidence" ? "bg-evidence-400" : "bg-muted-foreground/50"
+          }`}
         />
-      </section>
-
-      <section className="space-y-4">
-        <h2 className="text-2xl font-semibold">The "shouldn't be possible" moment</h2>
-        <p className="text-ink-500 max-w-2xl">
-          When a court asks the WageShield contract <em>"who filed claim #4721?"</em>,
-          the public record produces:
-        </p>
-        <pre className="receipt">
-{`14:32:00 ± 15 min
-Someone with a Homebase-class timeclock attestation
-filed a wage-theft claim against an employer whose
-ID hashes to 0xa46e…b3f2.
-
-That's all that exists.`}
-        </pre>
-        <p className="text-sm text-ink-500">
-          No name. No address. No immigration status. No dollar amount. No employer
-          identity (only a commitment hash). The plaintext is decryptable only by the
-          worker, an attorney they explicitly authorise, or a regulator querying
-          aggregate exposure.
-        </p>
-      </section>
+      </div>
+      <pre
+        className={`font-mono text-[11px] sm:text-xs leading-6 whitespace-pre overflow-x-auto ${
+          tone === "evidence" ? "text-evidence-400" : "text-muted-foreground"
+        }`}
+      >
+{lines.join("\n")}
+      </pre>
     </div>
   );
 }
 
-function Card({
+/* --------------------------------------------------------------------------------
+ *  Stat row — three numbers that hit hard. Mono, restrained.
+ * -------------------------------------------------------------------------------- */
+
+function StatRow() {
+  return (
+    <section className="px-6 py-24 sm:py-32 border-t border-white/[0.06]">
+      <div className="mx-auto max-w-5xl grid grid-cols-1 sm:grid-cols-3 gap-10">
+        <Stat
+          eyebrow="Stolen per year"
+          number="$50B"
+          body="Lower-bound estimate (EPI, Cooper & Kroeger 2017). 75% of low-wage workers experience some form of wage theft annually."
+        />
+        <Stat
+          eyebrow="File a claim"
+          number="< 1%"
+          body="Bobo, Wage Theft in America (2014). The Department of Labor's process is public record — retaliation and immigration fear deter the rest."
+        />
+        <Stat
+          eyebrow="Live testnet"
+          number="$3,600"
+          body="One encrypted claim, mined on Arbitrum Sepolia. The chain saw a hash; the worker saw the dollar figure."
+          href="https://sepolia.arbiscan.io/tx/0xb00687265c98de102ff83ba8e8e9ded8498272d20d660eafb8643060f3ddcb03"
+          tone="evidence"
+        />
+      </div>
+    </section>
+  );
+}
+
+function Stat({
   eyebrow,
-  title,
+  number,
   body,
   href,
+  tone,
 }: {
   eyebrow: string;
-  title: string;
+  number: string;
   body: string;
   href?: string;
+  tone?: "evidence";
 }) {
   const inner = (
-    <div className="border border-ink-200 dark:border-ink-700 rounded-xl p-5 space-y-1 hover:border-seal-400 transition">
-      <div className="text-seal-500 font-mono text-sm">{eyebrow}</div>
-      <div className="font-medium text-lg">{title}</div>
-      <div className="text-ink-500 text-sm">{body}</div>
+    <div className="space-y-3 group">
+      <Eyebrow>{eyebrow}</Eyebrow>
+      <div
+        className={`text-5xl sm:text-6xl font-medium tracking-tight ${
+          tone === "evidence" ? "text-evidence-400" : "text-foreground"
+        }`}
+      >
+        {number}
+      </div>
+      <p className="text-sm text-muted-foreground leading-relaxed">
+        {body}
+        {href && (
+          <span className="block mt-2 text-foreground/80 group-hover:text-foreground transition">
+            View on Arbiscan ↗
+          </span>
+        )}
+      </p>
     </div>
   );
-  return href ? (
-    <a href={href} target="_blank" rel="noreferrer">
-      {inner}
-    </a>
-  ) : (
-    inner
-  );
+  if (href) {
+    return (
+      <a href={href} target="_blank" rel="noreferrer">
+        {inner}
+      </a>
+    );
+  }
+  return inner;
 }

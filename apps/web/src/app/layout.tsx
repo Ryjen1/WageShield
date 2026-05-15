@@ -1,15 +1,17 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
-import { Nav } from "@/components/Nav";
+import { NavPill } from "@/components/NavPill";
+import { CursorSpotlight } from "@/components/primitives/CursorSpotlight";
+import { inter, instrumentSerif, geistMono } from "@/lib/fonts";
 
 export const metadata: Metadata = {
   title: {
-    default: "WageShield — Confidential Wage-Theft Claims",
+    default: "WageShield — Recover stolen wages",
     template: "%s · WageShield",
   },
   description:
-    "Recover stolen wages without revealing who you are. Privacy-first claims layer on Fhenix CoFHE + Privara.",
+    "Recover stolen wages without revealing who you are. A confidential wage-theft claims layer on Fhenix CoFHE.",
   applicationName: "WageShield",
   authors: [{ name: "WageShield" }],
   keywords: [
@@ -26,26 +28,32 @@ export const metadata: Metadata = {
   ],
   openGraph: {
     type: "website",
-    title: "WageShield — Confidential Wage-Theft Claims",
+    title: "WageShield — Recover stolen wages",
     description:
-      "Recover stolen wages without revealing who you are. Privacy-first claims layer on Fhenix CoFHE + Privara.",
+      "Recover stolen wages without revealing who you are. A confidential wage-theft claims layer on Fhenix CoFHE.",
     siteName: "WageShield",
   },
   twitter: {
     card: "summary_large_image",
-    title: "WageShield — Confidential Wage-Theft Claims",
+    title: "WageShield — Recover stolen wages",
     description:
-      "Recover stolen wages without revealing who you are. Privacy-first claims layer on Fhenix CoFHE + Privara.",
+      "Recover stolen wages without revealing who you are. A confidential wage-theft claims layer on Fhenix CoFHE.",
   },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body>
+    <html
+      lang="en"
+      className={`${inter.variable} ${instrumentSerif.variable} ${geistMono.variable} h-full antialiased`}
+    >
+      <body className="min-h-full flex flex-col font-sans">
         <Providers>
-          <Nav />
-          <main className="max-w-5xl mx-auto px-6 py-10">{children}</main>
+          <CursorSpotlight />
+          <NavPill />
+          <main className="relative flex flex-1 flex-col overflow-x-hidden">
+            {children}
+          </main>
         </Providers>
       </body>
     </html>

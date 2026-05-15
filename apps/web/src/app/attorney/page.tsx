@@ -10,6 +10,8 @@ import {
 import { useCofheClient } from "@/hooks/useCofheClient";
 import { getAppConfig } from "@/lib/config";
 import { getEthersProvider } from "@/lib/ethers-bridge";
+import { Eyebrow } from "@/components/primitives/Eyebrow";
+import { PillButton } from "@/components/primitives/PillButton";
 
 interface DecryptedClaim {
   claimId: bigint;
@@ -26,7 +28,6 @@ export default function AttorneyPage() {
   const cfg = getAppConfig();
   const { isConnected } = useAccount();
   const { client, connecting, error: cofheError } = useCofheClient();
-
   const [claimIdInput, setClaimIdInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,17 +41,8 @@ export default function AttorneyPage() {
     try {
       const claimId = BigInt(claimIdInput);
       const provider = getEthersProvider();
-      const meta = await readClaimMeta({
-        provider,
-        wageClaimAddress: cfg.wageClaim,
-        claimId,
-      });
-      const decrypted = await decryptHoursAndRate({
-        client,
-        provider,
-        wageClaimAddress: cfg.wageClaim,
-        claimId,
-      });
+      const meta = await readClaimMeta({ provider, wageClaimAddress: cfg.wageClaim, claimId });
+      const decrypted = await decryptHoursAndRate({ client, provider, wageClaimAddress: cfg.wageClaim, claimId });
       setClaim({
         claimId,
         worker: meta.worker,
@@ -72,78 +64,87 @@ export default function AttorneyPage() {
     }
   }
 
-  if (cfg.configError) return <Hint tone="error">{cfg.configError}</Hint>;
-  if (!isConnected) {
+  if (cfg.configError) return <Message tone="error" text={cfg.configError} />;
+  if (!isConnected)
     return (
-      <Hint>
-        Connect your attorney wallet. The worker must have called
-        `grantAttorneyAccess(claimId, your-address)` for you to decrypt.
-      </Hint>
+      <Message text="Connect your attorney wallet. The worker must have called grantAttorneyAccess(claimId, your-address) for you to decrypt." />
     );
-  }
-  if (connecting) return <Hint>Setting up encrypted compute…</Hint>;
-  if (cofheError) return <Hint tone="error">CoFHE error: {cofheError}</Hint>;
+  if (connecting) return <Message text="Setting up encrypted compute…" />;
+  if (cofheError) return <Message tone="error" text={`CoFHE error: ${cofheError}`} />;
 
   return (
-    <div className="space-y-8">
-      <header className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight">Attorney inbox</h1>
-        <p className="text-ink-500">
-          Open a claim by ID. You see hours, hourly rate, and the computed owed amount —
-          but only for claims the worker has explicitly authorised your address to view.
+    <div className="px-6 pt-32 pb-24 space-y-12 max-w-4xl mx-auto w-full">
+      <header className="space-y-4">
+        <Eyebrow>Attorney · case inbox</Eyebrow>
+        <h1 className="text-4xl sm:text-5xl font-medium tracking-tight leading-tight">
+          Open a claim by ID. <span className="font-serif italic">Only the cases your client authorised.</span>
+        </h1>
+        <p className="text-base text-muted-foreground leading-relaxed max-w-2xl">
+          You see hours, hourly rate, and the computed owed amount — but only for
+          claims the worker has explicitly granted your address to view.
         </p>
       </header>
 
-      <div className="flex gap-2">
-        <input
-          className="bg-ink-50 dark:bg-ink-900 border border-ink-200 dark:border-ink-700 rounded-lg px-3 py-2 font-mono w-32"
-          placeholder="claimId"
-          value={claimIdInput}
-          onChange={(e) => setClaimIdInput(e.target.value)}
-        />
-        <button
-          className="bg-seal-600 hover:bg-seal-700 text-white px-4 py-2 rounded-lg disabled:opacity-50"
-          disabled={busy || !claimIdInput || !client}
-          onClick={handleOpen}
-        >
+      <div className="flex flex-col sm:flex-row gap-3 sm:items-end max-w-2xl">
+        <label className="block space-y-1 flex-1">
+          <span className="eyebrow">claim id</span>
+          <input
+            value={claimIdInput}
+            onChange={(e) => setClaimIdInput(e.target.value)}
+            placeholder="e.g. 1"
+            className="w-full bg-black/30 border border-white/[0.08] rounded-xl px-4 py-3 font-mono text-sm text-foreground focus:outline-none focus:border-seal-400/60 transition"
+          />
+        </label>
+        <PillButton onClick={handleOpen} disabled={busy || !claimIdInput || !client} variant="primary">
           {busy ? "Decrypting…" : "Open claim"}
-        </button>
+        </PillButton>
       </div>
 
       {claim && (
-        <section className="border border-evidence-500/30 rounded-xl p-5 space-y-3">
-          <header className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Claim #{claim.claimId.toString()}</h2>
+        <section className="liquid-glass rounded-2xl p-6 space-y-5">
+          <header className="flex items-center justify-between flex-wrap gap-3">
+            <Eyebrow>Claim #{claim.claimId.toString()}</Eyebrow>
             <div className="flex gap-2 text-xs">
               {claim.disputed && (
-                <span className="bg-alarm-500/20 text-alarm-500 px-2 py-1 rounded">
+                <span className="font-mono text-[10px] tracking-[0.3em] uppercase border border-alarm-500/40 text-alarm-500 rounded-full px-2.5 py-1">
                   disputed
                 </span>
               )}
               {claim.resolved && (
-                <span className="bg-evidence-500/20 text-evidence-500 px-2 py-1 rounded">
+                <span className="font-mono text-[10px] tracking-[0.3em] uppercase border border-evidence-400/40 text-evidence-400 rounded-full px-2.5 py-1">
                   resolved
                 </span>
               )}
             </div>
           </header>
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            <Detail label="Worker" mono>
-              {claim.worker}
+
+          <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+            <Detail label="Worker">
+              <code className="font-mono text-sm text-muted-foreground break-all">
+                {claim.worker}
+              </code>
             </Detail>
-            <Detail label="EmployerCommitment" mono>
-              {claim.employerCommitment.slice(0, 10)}…
-              {claim.employerCommitment.slice(-6)}
+            <Detail label="Employer commitment">
+              <code className="font-mono text-sm text-muted-foreground break-all">
+                {claim.employerCommitment.slice(0, 10)}…{claim.employerCommitment.slice(-6)}
+              </code>
             </Detail>
-            <Detail label="Hours worked">{claim.hoursWorked.toString()}</Detail>
-            <Detail label="Hourly rate">${(Number(claim.hourlyRateCents) / 100).toFixed(2)}</Detail>
-            <Detail label="Owed (decrypted)">
-              <span className="text-evidence-500 font-semibold">
+            <Detail label="Hours worked">
+              <span className="font-mono text-base text-foreground">{claim.hoursWorked.toString()}</span>
+            </Detail>
+            <Detail label="Hourly rate">
+              <span className="font-mono text-base text-foreground">
+                ${(Number(claim.hourlyRateCents) / 100).toFixed(2)}
+              </span>
+            </Detail>
+            <Detail label="Owed (decrypted)" wide>
+              <span className="font-mono text-3xl text-evidence-400 tracking-tight">
                 ${(Number(claim.owedCents) / 100).toLocaleString("en-US", { minimumFractionDigits: 2 })}
               </span>
             </Detail>
-          </div>
-          <p className="text-xs text-ink-500">
+          </dl>
+
+          <p className="text-xs text-muted-foreground/80 leading-relaxed pt-3 border-t border-white/[0.06]">
             These plaintext values are visible to your address only because the worker
             granted you ACL access. They are not visible to the contract operator, the
             chain, or any other party.
@@ -151,7 +152,11 @@ export default function AttorneyPage() {
         </section>
       )}
 
-      {error && <Hint tone="error">{error}</Hint>}
+      {error && (
+        <div className="rounded-2xl border border-alarm-500/40 bg-alarm-500/10 px-5 py-4 text-sm text-alarm-500">
+          {error}
+        </div>
+      )}
     </div>
   );
 }
@@ -159,36 +164,27 @@ export default function AttorneyPage() {
 function Detail({
   label,
   children,
-  mono = false,
+  wide,
 }: {
   label: string;
   children: React.ReactNode;
-  mono?: boolean;
+  wide?: boolean;
 }) {
   return (
-    <div>
-      <div className="text-xs uppercase tracking-wider text-ink-500">{label}</div>
-      <div className={mono ? "font-mono text-sm break-all" : "text-base"}>{children}</div>
+    <div className={`space-y-1 ${wide ? "sm:col-span-2" : ""}`}>
+      <dt className="eyebrow">{label}</dt>
+      <dd>{children}</dd>
     </div>
   );
 }
 
-function Hint({
-  children,
-  tone = "info",
-}: {
-  children: React.ReactNode;
-  tone?: "info" | "error";
-}) {
+function Message({ text, tone = "info" }: { text: string; tone?: "info" | "error" }) {
   return (
-    <div
-      className={`p-4 rounded-lg ${
-        tone === "error"
-          ? "bg-alarm-500/10 text-alarm-500"
-          : "bg-seal-100 dark:bg-seal-700/20 text-seal-700 dark:text-seal-100"
-      }`}
-    >
-      {children}
+    <div className="min-h-[100svh] flex items-center justify-center px-6">
+      <div className={`max-w-md text-center space-y-4 ${tone === "error" ? "text-alarm-500" : "text-muted-foreground"}`}>
+        <Eyebrow className="text-center">{tone === "error" ? "Error" : "Hint"}</Eyebrow>
+        <p className="text-base leading-relaxed">{text}</p>
+      </div>
     </div>
   );
 }

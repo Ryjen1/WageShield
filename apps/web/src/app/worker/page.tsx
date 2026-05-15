@@ -13,9 +13,11 @@ import {
   type SubmitClaimResult,
 } from "@wageshield/sdk";
 import { useCofheClient } from "@/hooks/useCofheClient";
-import { useAccount, useWalletClient, usePublicClient } from "wagmi";
+import { useAccount } from "wagmi";
 import { getAppConfig } from "@/lib/config";
 import { getEthersProvider, getEthersSigner } from "@/lib/ethers-bridge";
+import { Eyebrow } from "@/components/primitives/Eyebrow";
+import { PillButton } from "@/components/primitives/PillButton";
 
 interface FormState {
   employerLabel: string;
@@ -35,10 +37,8 @@ const DEFAULT_FORM: FormState = {
 
 export default function WorkerPage() {
   const cfg = getAppConfig();
-  const { address, isConnected } = useAccount();
+  const { isConnected } = useAccount();
   const { client, connecting, error: cofheError } = useCofheClient();
-  const { data: walletClient } = useWalletClient();
-  const publicClient = usePublicClient();
 
   const [form, setForm] = useState<FormState>(DEFAULT_FORM);
   const [busy, setBusy] = useState<string | null>(null);
@@ -50,19 +50,19 @@ export default function WorkerPage() {
   const [attorneyInput, setAttorneyInput] = useState("");
   const [grantTx, setGrantTx] = useState<Hex32 | null>(null);
 
-  // ---- Step 1: get attestation from issuer ---------------------------------
   async function handleGetAttestation() {
-    if (!address) return;
     setError(null);
     setBusy("attestation");
     try {
+      const signer = await getEthersSigner();
+      const workerAddress = await signer.getAddress();
       const periodStartUnix = Math.floor(new Date(form.periodStart).getTime() / 1000);
       const periodEndUnix = Math.floor(new Date(form.periodEnd).getTime() / 1000);
       const r = await fetch(`${cfg.issuerUrl}/attest`, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          worker: address,
+          worker: workerAddress,
           employerLabel: form.employerLabel,
           hoursWorked: Number(form.hoursWorked),
           hourlyRateCents: Number(form.hourlyRateCents),
@@ -70,16 +70,13 @@ export default function WorkerPage() {
           periodEnd: periodEndUnix,
         }),
       });
-      if (!r.ok) {
-        throw new Error(`Issuer responded ${r.status}: ${await r.text()}`);
-      }
+      if (!r.ok) throw new Error(`Issuer responded ${r.status}: ${await r.text()}`);
       const data = await r.json();
       const domain = buildAttestationDomain({
         chainId: cfg.chainId,
         wageClaimAddress: cfg.wageClaim,
       });
-      // Reconstruct the bigint-typed attestation from the JSON-string fields.
-      const signed: SignedAttestation = {
+      setSignedAttestation({
         attestation: {
           worker: data.attestation.worker as Address,
           employerId: data.attestation.employerId as Hex32,
@@ -94,8 +91,7 @@ export default function WorkerPage() {
         signer: data.signer,
         digest: data.digest,
         domain,
-      };
-      setSignedAttestation(signed);
+      });
     } catch (e: any) {
       setError(e?.message ?? String(e));
     } finally {
@@ -103,9 +99,8 @@ export default function WorkerPage() {
     }
   }
 
-  // ---- Step 2: encrypt + submit --------------------------------------------
   async function handleSubmit() {
-    if (!client || !walletClient || !signedAttestation) return;
+    if (!client || !signedAttestation) return;
     setError(null);
     setBusy("submit");
     try {
@@ -124,9 +119,8 @@ export default function WorkerPage() {
     }
   }
 
-  // ---- Step 3: decrypt the owed amount via permit --------------------------
   async function handleDecrypt() {
-    if (!client || !result || !publicClient) return;
+    if (!client || !result) return;
     setError(null);
     setBusy("decrypt");
     try {
@@ -145,9 +139,8 @@ export default function WorkerPage() {
     }
   }
 
-  // ---- Step 4: grant attorney access ---------------------------------------
   async function handleGrantAttorney() {
-    if (!result || !walletClient || !attorneyInput) return;
+    if (!result || !attorneyInput) return;
     setError(null);
     setBusy("grant");
     try {
@@ -166,239 +159,208 @@ export default function WorkerPage() {
     }
   }
 
-  if (cfg.configError) return <Hint tone="error">{cfg.configError}</Hint>;
-  if (!isConnected) {
-    return <Hint>Connect your wallet to file a claim.</Hint>;
-  }
-  if (connecting) return <Hint>Setting up encrypted compute…</Hint>;
-  if (cofheError) return <Hint tone="error">CoFHE error: {cofheError}</Hint>;
+  if (cfg.configError)
+    return <PageMessage tone="error" message={cfg.configError} />;
+  if (!isConnected)
+    return <PageMessage message="Connect your wallet to file a claim." />;
+  if (connecting) return <PageMessage message="Setting up encrypted compute…" />;
+  if (cofheError) return <PageMessage tone="error" message={`CoFHE error: ${cofheError}`} />;
 
   return (
-    <div className="space-y-8">
-      <header className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight">File a wage-theft claim</h1>
-        <p className="text-ink-500">
-          Step 1 — Issuer signs your timeclock. Step 2 — your hours and rate are encrypted
-          before they leave your device. Step 3 — the chain stores only the encrypted
-          handles + a non-identifying receipt event.
-        </p>
-      </header>
+    <div className="px-6 pt-32 pb-24 space-y-16">
+      <Header />
 
-      <Step n={1} title="Get a timeclock attestation">
+      <Step n="01" title={<>Get a <span className="font-serif italic">timeclock attestation</span></>}>
+        <Field label="Employer label" value={form.employerLabel} onChange={(v) => setForm({ ...form, employerLabel: v })} />
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Employer label">
-            <input
-              className={inputCls}
-              value={form.employerLabel}
-              onChange={(e) => setForm({ ...form, employerLabel: e.target.value })}
-            />
-          </Field>
-          <Field label="Hours worked">
-            <input
-              className={inputCls}
-              type="number"
-              value={form.hoursWorked}
-              onChange={(e) => setForm({ ...form, hoursWorked: e.target.value })}
-            />
-          </Field>
-          <Field label="Hourly rate (cents)">
-            <input
-              className={inputCls}
-              type="number"
-              value={form.hourlyRateCents}
-              onChange={(e) => setForm({ ...form, hourlyRateCents: e.target.value })}
-            />
-          </Field>
-          <Field label="Period start">
-            <input
-              className={inputCls}
-              type="date"
-              value={form.periodStart}
-              onChange={(e) => setForm({ ...form, periodStart: e.target.value })}
-            />
-          </Field>
-          <Field label="Period end">
-            <input
-              className={inputCls}
-              type="date"
-              value={form.periodEnd}
-              onChange={(e) => setForm({ ...form, periodEnd: e.target.value })}
-            />
-          </Field>
+          <Field label="Hours worked" value={form.hoursWorked} type="number" onChange={(v) => setForm({ ...form, hoursWorked: v })} />
+          <Field label="Hourly rate (cents)" value={form.hourlyRateCents} type="number" onChange={(v) => setForm({ ...form, hourlyRateCents: v })} />
+          <Field label="Period start" value={form.periodStart} type="date" onChange={(v) => setForm({ ...form, periodStart: v })} />
+          <Field label="Period end" value={form.periodEnd} type="date" onChange={(v) => setForm({ ...form, periodEnd: v })} />
         </div>
-        <button
-          className="bg-seal-600 hover:bg-seal-700 text-white px-4 py-2 rounded-lg disabled:opacity-50"
-          disabled={busy !== null}
-          onClick={handleGetAttestation}
-        >
-          {busy === "attestation" ? "Requesting…" : "Get attestation"}
-        </button>
+        <PillButton onClick={handleGetAttestation} disabled={busy !== null} variant="primary">
+          {busy === "attestation" ? "Requesting…" : "Request attestation"}
+        </PillButton>
         {signedAttestation && (
           <pre className="receipt">
-            {`Signed by:    ${signedAttestation.signer}
-EmployerId:   ${signedAttestation.attestation.employerId}
-Digest:       ${signedAttestation.digest}
-Nonce:        ${signedAttestation.attestation.nonce}`}
+{`signer    : ${signedAttestation.signer}
+employerId: ${signedAttestation.attestation.employerId}
+digest    : ${signedAttestation.digest}
+nonce     : ${signedAttestation.attestation.nonce}`}
           </pre>
         )}
       </Step>
 
-      <Step n={2} title="Encrypt and submit on-chain" disabled={!signedAttestation}>
-        <p className="text-sm text-ink-500">
-          The SDK encrypts hours + rate via @cofhe/sdk (ZK-proven inputs), then calls
-          submitClaim on Fhenix CoFHE. The contract computes encrypted owed = hours ×
-          rate via FHE.mul.
+      <Step n="02" title={<>Encrypt and <span className="font-serif italic">submit on-chain</span></>} dim={!signedAttestation}>
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          The SDK encrypts hours + rate via @cofhe/sdk (ZK-proven inputs), then
+          calls submitClaim on Fhenix CoFHE. The contract computes encrypted
+          owed = hours × rate via FHE.mul.
         </p>
-        <button
-          className="bg-seal-600 hover:bg-seal-700 text-white px-4 py-2 rounded-lg disabled:opacity-50"
-          disabled={busy !== null || !signedAttestation || !client}
-          onClick={handleSubmit}
-        >
-          {busy === "submit" ? "Encrypting + submitting…" : "Encrypt + submit"}
-        </button>
+        <PillButton onClick={handleSubmit} disabled={busy !== null || !signedAttestation || !client} variant="primary">
+          {busy === "submit" ? "Encrypting + submitting…" : "Encrypt and submit"}
+        </PillButton>
         {result && (
-          <pre className="receipt">
-            {`claimId:           ${result.claimId}
-tx:                ${result.txHash}
-block:             ${result.blockNumber}
-gas:               ${result.gasUsed}
-employerCommitment ${result.event.employerCommitment}
-timestampBucket:   ${result.event.timestampBucket}
-issuer:            ${result.event.issuer}`}
-          </pre>
-        )}
-        {result && (
-          <a
-            href={`${cfg.explorerUrl}/tx/${result.txHash}`}
-            target="_blank"
-            rel="noreferrer"
-            className="text-seal-500 underline text-sm"
-          >
-            View on block explorer →
-          </a>
+          <>
+            <pre className="receipt">
+{`claimId            : ${result.claimId}
+tx                 : ${result.txHash}
+block              : ${result.blockNumber}
+gas                : ${result.gasUsed}
+employerCommitment : ${result.event.employerCommitment}
+timestampBucket    : ${result.event.timestampBucket}
+issuer             : ${result.event.issuer}`}
+            </pre>
+            <a
+              href={`${cfg.explorerUrl}/tx/${result.txHash}`}
+              target="_blank"
+              rel="noreferrer"
+              className="font-mono text-[10px] tracking-[0.3em] uppercase text-muted-foreground hover:text-foreground transition"
+            >
+              View on block explorer ↗
+            </a>
+          </>
         )}
       </Step>
 
-      <Step n={3} title="Reveal the owed amount (you only)" disabled={!result}>
-        <p className="text-sm text-ink-500">
-          Off-chain decrypt via a CoFHE permit. Only your wallet can do this — the chain
-          itself never sees the plaintext.
+      <Step n="03" title={<>Reveal the <span className="font-serif italic">owed amount</span> — you only</>} dim={!result}>
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          Off-chain decrypt via a CoFHE permit. Only your wallet can do this — the
+          chain never sees the plaintext.
         </p>
-        <button
-          className="bg-evidence-600 hover:bg-evidence-500 text-white px-4 py-2 rounded-lg disabled:opacity-50"
-          disabled={busy !== null || !result}
-          onClick={handleDecrypt}
-        >
+        <PillButton onClick={handleDecrypt} disabled={busy !== null || !result} variant="evidence">
           {busy === "decrypt" ? "Decrypting…" : "Reveal owed amount"}
-        </button>
+        </PillButton>
         {decryptedOwed !== null && (
-          <div className="text-3xl font-mono text-evidence-500">
+          <div className="font-mono text-5xl sm:text-6xl text-evidence-400 tracking-tight">
             ${(Number(decryptedOwed) / 100).toLocaleString("en-US", { minimumFractionDigits: 2 })}
           </div>
         )}
       </Step>
 
-      <Step n={4} title="Grant your attorney decrypt access" disabled={!result}>
-        <p className="text-sm text-ink-500">
-          The attorney sees only the claims you authorise — never your aggregate, never
-          another worker's claim.
+      <Step n="04" title={<>Grant your <span className="font-serif italic">attorney</span> access</>} dim={!result}>
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          The attorney sees only the claims you authorise — never your aggregate,
+          never another worker's claim.
         </p>
-        <div className="flex gap-2">
-          <input
-            className={`${inputCls} flex-1`}
-            placeholder="0xAttorneyAddress…"
-            value={attorneyInput}
-            onChange={(e) => setAttorneyInput(e.target.value)}
-          />
-          <button
-            className="bg-seal-600 hover:bg-seal-700 text-white px-4 py-2 rounded-lg disabled:opacity-50"
-            disabled={busy !== null || !ethers.isAddress(attorneyInput)}
-            onClick={handleGrantAttorney}
-          >
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Field label="" placeholder="0xAttorneyAddress…" value={attorneyInput} onChange={setAttorneyInput} />
+          <PillButton onClick={handleGrantAttorney} disabled={busy !== null || !ethers.isAddress(attorneyInput)} variant="primary">
             {busy === "grant" ? "Granting…" : "Grant access"}
-          </button>
+          </PillButton>
         </div>
         {grantTx && (
           <a
             href={`${cfg.explorerUrl}/tx/${grantTx}`}
             target="_blank"
             rel="noreferrer"
-            className="text-seal-500 underline text-sm"
+            className="font-mono text-[10px] tracking-[0.3em] uppercase text-muted-foreground hover:text-foreground transition"
           >
-            Grant tx → {grantTx.slice(0, 10)}…
+            Grant tx → {grantTx.slice(0, 10)}… ↗
           </a>
         )}
       </Step>
 
-      {error && <Hint tone="error">{error}</Hint>}
+      {error && (
+        <div className="max-w-3xl rounded-2xl border border-alarm-500/40 bg-alarm-500/10 px-5 py-4 text-sm text-alarm-500">
+          {error}
+        </div>
+      )}
     </div>
   );
 }
 
-// --------------------------------------------------------------------------------
-//  Local helpers
-// --------------------------------------------------------------------------------
+/* --------------------------------------------------------------------------------
+ *  Internals
+ * -------------------------------------------------------------------------------- */
 
-const inputCls =
-  "w-full bg-ink-50 dark:bg-ink-900 border border-ink-200 dark:border-ink-700 rounded-lg px-3 py-2 font-mono text-sm";
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Header() {
   return (
-    <label className="block space-y-1">
-      <span className="text-xs uppercase tracking-wider text-ink-500">{label}</span>
-      {children}
-    </label>
+    <header className="max-w-3xl space-y-4">
+      <Eyebrow>Worker · file a claim</Eyebrow>
+      <h1 className="text-4xl sm:text-5xl font-medium tracking-tight leading-tight">
+        Four steps. Nothing identifying <span className="font-serif italic">hits the chain.</span>
+      </h1>
+      <p className="text-base text-muted-foreground leading-relaxed">
+        Issuer signs your timeclock. Your hours and rate are encrypted before they
+        leave your device. The chain stores ciphertexts and a non-identifying receipt.
+      </p>
+    </header>
   );
 }
 
 function Step({
   n,
   title,
-  disabled,
+  dim,
   children,
 }: {
-  n: number;
-  title: string;
-  disabled?: boolean;
+  n: string;
+  title: React.ReactNode;
+  dim?: boolean;
   children: React.ReactNode;
 }) {
   return (
     <section
-      className={`space-y-3 border-l-2 pl-5 py-2 ${
-        disabled
-          ? "border-ink-200 dark:border-ink-700 opacity-50"
-          : "border-seal-500"
+      className={`max-w-3xl border-t border-white/[0.06] pt-10 transition-opacity ${
+        dim ? "opacity-40" : ""
       }`}
     >
-      <h2 className="text-lg font-semibold flex items-center gap-2">
-        <span className="bg-seal-100 text-seal-700 rounded-full w-6 h-6 text-sm flex items-center justify-center">
-          {n}
-        </span>
-        {title}
-      </h2>
-      <div className="space-y-3">{children}</div>
+      <div className="grid grid-cols-[64px_1fr] sm:grid-cols-[120px_1fr] gap-4 sm:gap-8">
+        <div className="font-mono text-xs tracking-[0.3em] text-muted-foreground/60 pt-1">{n}</div>
+        <div className="space-y-5">
+          <h2 className="text-xl sm:text-2xl font-medium tracking-tight">{title}</h2>
+          {children}
+        </div>
+      </div>
     </section>
   );
 }
 
-function Hint({
-  children,
-  tone = "info",
+function Field({
+  label,
+  value,
+  onChange,
+  type = "text",
+  placeholder,
 }: {
-  children: React.ReactNode;
-  tone?: "info" | "error";
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  type?: string;
+  placeholder?: string;
 }) {
   return (
-    <div
-      className={`p-4 rounded-lg ${
-        tone === "error"
-          ? "bg-alarm-500/10 text-alarm-500"
-          : "bg-seal-100 dark:bg-seal-700/20 text-seal-700 dark:text-seal-100"
-      }`}
-    >
-      {children}
-    </div>
+    <label className="block space-y-1 flex-1">
+      {label && <span className="eyebrow">{label}</span>}
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="w-full bg-black/30 border border-white/[0.08] rounded-xl px-4 py-3 font-mono text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-seal-400/60 transition"
+      />
+    </label>
   );
 }
 
-
+function PageMessage({
+  message,
+  tone = "info",
+}: {
+  message: string;
+  tone?: "info" | "error";
+}) {
+  return (
+    <div className="min-h-[100svh] flex items-center justify-center px-6">
+      <div
+        className={`max-w-md text-center space-y-4 ${
+          tone === "error" ? "text-alarm-500" : "text-muted-foreground"
+        }`}
+      >
+        <Eyebrow className="text-center">{tone === "error" ? "Error" : "Hint"}</Eyebrow>
+        <p className="text-base leading-relaxed">{message}</p>
+      </div>
+    </div>
+  );
+}

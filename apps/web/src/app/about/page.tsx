@@ -1,130 +1,185 @@
-import Link from "next/link";
+import { Eyebrow } from "@/components/primitives/Eyebrow";
+import { PillButton } from "@/components/primitives/PillButton";
 
 export default function AboutPage() {
   return (
-    <article className="max-w-3xl space-y-12">
-      <header className="space-y-3">
-        <h1 className="text-4xl font-semibold tracking-tight">About WageShield</h1>
-        <p className="text-xl text-ink-500">
-          Privacy-by-design wage-theft claims. A worker proves they're owed money —
-          without disclosing who they are, how many hours they worked, what their rate
-          was, or which employer is being claimed against (in plaintext).
-        </p>
-      </header>
-
-      <Section title="The architecture">
-        <ol className="list-decimal pl-6 space-y-3 text-ink-700 dark:text-ink-200">
-          <li>
-            A trusted timeclock issuer (mock Homebase / 7shifts / worker-center co-op
-            signer) signs an EIP-712 <Code>TimeclockAttestation</Code> committing to
-            the worker's hours and rate. The plaintext values are committed-to in the
-            signature, not revealed on-chain.
-          </li>
-          <li>
-            The worker's app encrypts hours and rate locally via{" "}
-            <Code>@cofhe/sdk</Code> (Fhenix CoFHE), producing ZK-proven{" "}
-            <Code>InEuint*</Code> inputs.
-          </li>
-          <li>
-            <Code>WageClaim.submitClaim(...)</Code> verifies the issuer signature,
-            computes <Code>FHE.mul(eHours, eRate)</Code> on the encrypted inputs, and
-            folds the result into a per-employer encrypted aggregate.
-          </li>
-          <li>
-            The contract emits a subpoena-resistant <Code>ClaimSubmitted</Code> event
-            with no PII — only an employer commitment, a 15-minute time bucket, the
-            EIP-712 digest, and the issuer address.
-          </li>
-          <li>
-            Off-chain, the worker decrypts their own owed amount via a CoFHE permit.
-            They can grant decrypt access to a specific attorney via{" "}
-            <Code>grantAttorneyAccess</Code>. A registered regulator can decrypt the
-            per-employer <em>aggregate</em>, never individual claims.
-          </li>
-        </ol>
-      </Section>
-
-      <Section title="Why FHE specifically">
-        <p className="text-ink-700 dark:text-ink-200">
-          ZK proves a fact to a verifier without revealing the witness, but the
-          verifier sees the assertion. TEE-based privacy outsources trust to Intel's
-          chain of attestation. FHE keeps the data encrypted while it's being computed
-          on — the contract operator, the chain, and observers all see only
-          ciphertexts. For the wage-theft use case this matters because the
-          per-employer aggregate is a sum across multiple workers' encrypted
-          submissions; ZK can't aggregate without a joint proof, and TEE requires
-          trusting an off-chain enclave operator with the plaintexts.
-        </p>
-      </Section>
-
-      <Section title="Why this is hard without FHE">
-        <p className="text-ink-700 dark:text-ink-200">
-          Most privacy-preserving systems today rely on either{" "}
-          <strong>ZK proofs</strong> (which reveal the assertion to a verifier) or{" "}
-          <strong>TEE-based confidential compute</strong> (which outsources trust to a
-          hardware vendor's attestation chain and an off-chain enclave operator).
-          Neither composes cleanly with cross-worker aggregation: ZK requires a joint
-          proof from every contributor, and TEE requires every contributor to trust the
-          same enclave operator with their plaintext.
-        </p>
-        <p className="text-ink-700 dark:text-ink-200">
-          WageShield's per-employer aggregate exposure is computed as{" "}
-          <Code>FHE.add</Code> across each worker's independently-submitted ciphertext.
-          No joint proof. No shared enclave. No vendor attestation. The chain operator,
-          the contract owner, and every other observer see only ciphertexts until a
-          permit holder decrypts off-chain — and even then, only their authorised
-          slice.
-        </p>
-      </Section>
-
-      <Section title="Live deployment — Arbitrum Sepolia">
-        <p className="text-ink-700 dark:text-ink-200">
-          See <Link href="/" className="text-seal-500 underline">the home page</Link>{" "}
-          for the live testnet transaction proving the full pipeline. Contract
-          addresses and reproduce-it-yourself instructions live in the project README.
-        </p>
-      </Section>
-
-      <Section title="What's not in this demo">
-        <ul className="list-disc pl-6 space-y-3 text-ink-700 dark:text-ink-200">
-          <li>
-            <strong>Real worker identity / authentication.</strong> The mock issuer
-            signs whatever the worker types — production would OAuth into Homebase /
-            7shifts and sign only what the upstream platform vouches for.
-          </li>
-          <li>
-            <strong>Privara <Code>ConfidentialEscrow</Code> wiring.</strong> The
-            resolver and policy contracts are ABI-ready, but the end-to-end
-            settlement-pool funding flow is a Wave 5 deliverable.
-          </li>
-          <li>
-            <strong>k-anonymity gating</strong> on regulator aggregate decrypt. v1
-            leaks single-claim aggregates; the regulator UI displays a warning when
-            N=1.
-          </li>
-          <li>
-            <strong>Mainnet.</strong> Fhenix CoFHE production support is forthcoming.
-          </li>
-        </ul>
-      </Section>
+    <article className="px-6 pt-32 pb-24 space-y-24">
+      <Header />
+      <HowItWorks />
+      <WhyFHE />
+      <Status />
+      <Footer />
     </article>
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Header() {
   return (
-    <section className="space-y-3">
-      <h2 className="text-2xl font-semibold tracking-tight">{title}</h2>
-      {children}
+    <header className="mx-auto max-w-3xl space-y-6">
+      <Eyebrow>About</Eyebrow>
+      <h1 className="text-4xl sm:text-6xl font-medium tracking-tight leading-tight">
+        Bounded disclosure, <span className="font-serif italic">on the wire.</span>
+      </h1>
+      <p className="text-lg text-muted-foreground leading-relaxed max-w-2xl">
+        WageShield is a confidential wage-theft claims layer on Fhenix CoFHE.
+        Settlement pools pay. Subpoenas reach bucketed timestamps and cryptographic
+        commitments — no name, no employer, no amount.
+      </p>
+    </header>
+  );
+}
+
+function HowItWorks() {
+  const steps: Array<{ n: string; title: React.ReactNode; body: string }> = [
+    {
+      n: "01",
+      title: <>Issuer signs a <span className="font-serif italic">timeclock attestation</span></>,
+      body: "A trusted issuer (mock Homebase / 7shifts / worker-center co-op signer) EIP-712-signs (worker, employerId, hours, rate, period). Plaintext values are committed to in the signature — never revealed on-chain.",
+    },
+    {
+      n: "02",
+      title: <>Worker encrypts <span className="font-serif italic">on their device</span></>,
+      body: "@cofhe/sdk encrypts hours + rate locally, producing ZK-proven InEuint64 / InEuint32 inputs. Plaintext never leaves the browser.",
+    },
+    {
+      n: "03",
+      title: <>Contract runs <span className="font-serif italic">FHE.mul</span> on encrypted state</>,
+      body: "WageClaim.submitClaim verifies the issuer signature, computes owedCents = hours × rate via FHE.mul, folds the result into a per-employer encrypted aggregate via FHE.add.",
+    },
+    {
+      n: "04",
+      title: <>Receipt commits to <span className="font-serif italic">a hash, not a person</span></>,
+      body: "ClaimSubmitted emits: claimId, employerCommitment hash, 15-min timestamp bucket, EIP-712 digest, issuer address. That's the whole on-chain disclosure.",
+    },
+    {
+      n: "05",
+      title: <>Decryption is <span className="font-serif italic">role-scoped, off-chain</span></>,
+      body: "Worker decrypts their own claim. Attorney decrypts only the claims the worker granted them. Regulator decrypts only the per-employer aggregate. Public sees ciphertexts.",
+    },
+  ];
+  return (
+    <section className="mx-auto max-w-4xl space-y-10">
+      <div className="space-y-3 max-w-2xl">
+        <Eyebrow>Architecture</Eyebrow>
+        <h2 className="text-3xl sm:text-4xl font-medium tracking-tight">
+          Five steps. No plaintext on-chain.
+        </h2>
+      </div>
+      <ol className="space-y-8">
+        {steps.map((s) => (
+          <li key={s.n} className="grid grid-cols-[64px_1fr] sm:grid-cols-[120px_1fr] gap-4 sm:gap-8 border-t border-white/[0.06] pt-8 first:border-t-0 first:pt-0">
+            <div className="font-mono text-xs tracking-[0.3em] text-muted-foreground/60 pt-1">
+              {s.n}
+            </div>
+            <div className="space-y-3">
+              <h3 className="text-xl sm:text-2xl font-medium tracking-tight">{s.title}</h3>
+              <p className="text-base text-muted-foreground leading-relaxed">{s.body}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
     </section>
   );
 }
 
-function Code({ children }: { children: React.ReactNode }) {
+function WhyFHE() {
   return (
-    <code className="font-mono text-sm bg-ink-100 dark:bg-ink-700 px-1.5 py-0.5 rounded">
-      {children}
-    </code>
+    <section className="mx-auto max-w-3xl space-y-6">
+      <Eyebrow>Why FHE specifically</Eyebrow>
+      <h2 className="text-3xl sm:text-4xl font-medium tracking-tight">
+        Cross-worker aggregation breaks <span className="font-serif italic">every other privacy primitive.</span>
+      </h2>
+      <div className="space-y-4 text-base text-muted-foreground leading-relaxed">
+        <p>
+          ZK proves a fact to a verifier without revealing the witness — but it
+          requires a joint proof from every contributor. Workers submit claims
+          asynchronously, across weeks, across jurisdictions. There is no
+          coordinated moment to produce a joint ZK proof.
+        </p>
+        <p>
+          TEE-based privacy outsources trust to a hardware vendor's attestation
+          chain and an off-chain enclave operator. The moment that operator is
+          subpoenaed, every worker's plaintext leaks retroactively.
+        </p>
+        <p>
+          FHE keeps the data encrypted <em>while it's being computed on</em>. The
+          per-employer aggregate is computed as <code className="font-mono text-foreground bg-white/[0.06] px-1.5 py-0.5 rounded">FHE.add</code> across
+          each worker's independently-submitted ciphertext. No joint proof. No
+          shared enclave. No vendor attestation. The trust assumption is "FHE
+          soundness holds" — that's it.
+        </p>
+      </div>
+    </section>
   );
 }
 
+function Status() {
+  const rows: Array<{ component: string; status: "real" | "draft" | "planned"; note: string }> = [
+    { component: "WageClaim.sol — encrypted claims registry", status: "real", note: "Live on Arbitrum Sepolia. 5/5 mock-env tests passing." },
+    { component: "WageTheftResolver — Privara IConditionResolver", status: "real", note: "Gates escrow release on dispute window + resolution flags." },
+    { component: "WageTheftPolicy — Privara IUnderwriterPolicy", status: "real", note: "Encrypted risk score + dispute judgment." },
+    { component: "TimeclockIssuerRegistry — trusted-issuer allow-list", status: "real", note: "v1 owner-managed; v2 spec'd as 5-of-7 quorum + 7-day timelock." },
+    { component: "Live testnet e2e (encrypted FHE.mul + permit decrypt)", status: "real", note: "tx 0xb00687...dcb03 on Arbitrum Sepolia. Decrypted $3,600 — exact match." },
+    { component: "Web app (worker / attorney / regulator / about)", status: "real", note: "Next.js 14 + wagmi + @cofhe/sdk. You're using it now." },
+    { component: "Mock timeclock issuer service", status: "real", note: "Express + EIP-712 signer. Auto-discovers deployed WageClaim." },
+    { component: "Privara ConfidentialEscrow end-to-end demo", status: "draft", note: "Resolver + Policy ABI-ready; SDK glue lands in Wave 5." },
+    { component: "k-anonymity gate on regulator aggregate decrypt", status: "planned", note: "v1 leaks single-claim aggregates; UI warns when N=1." },
+    { component: "Real time-tracker integrations (Homebase / 7shifts OAuth)", status: "planned", note: "Mock issuer proves the cryptographic shape; production needs real upstream." },
+    { component: "Mainnet deployment", status: "planned", note: "Pending Fhenix CoFHE production launch." },
+  ];
+  const toneByStatus: Record<string, string> = {
+    real: "text-evidence-400 border-evidence-400/40",
+    draft: "text-amber-400 border-amber-400/40",
+    planned: "text-muted-foreground border-white/15",
+  };
+  return (
+    <section className="mx-auto max-w-4xl space-y-10">
+      <div className="space-y-3 max-w-2xl">
+        <Eyebrow>What's real / what's mocked</Eyebrow>
+        <h2 className="text-3xl sm:text-4xl font-medium tracking-tight">
+          The <span className="font-serif italic">honest scope</span> table.
+        </h2>
+      </div>
+      <div className="divide-y divide-white/[0.06] border border-white/[0.06] rounded-2xl overflow-hidden">
+        {rows.map((r) => (
+          <div key={r.component} className="grid grid-cols-[1fr_88px] gap-4 px-5 py-4 hover:bg-white/[0.02] transition">
+            <div className="space-y-1">
+              <div className="text-base font-medium text-foreground">{r.component}</div>
+              <div className="text-sm text-muted-foreground">{r.note}</div>
+            </div>
+            <div className="flex items-start justify-end">
+              <span
+                className={`font-mono text-[10px] tracking-[0.3em] uppercase border rounded-full px-2.5 py-1 ${toneByStatus[r.status]}`}
+              >
+                {r.status}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function Footer() {
+  return (
+    <section className="mx-auto max-w-3xl space-y-6 text-center">
+      <Eyebrow className="text-center">Try it</Eyebrow>
+      <h2 className="text-3xl sm:text-4xl font-medium tracking-tight">
+        File a claim. Decrypt the amount. <span className="font-serif italic">No one else can.</span>
+      </h2>
+      <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center sm:gap-4 pt-2">
+        <PillButton href="/worker" variant="primary">
+          File a claim
+        </PillButton>
+        <PillButton
+          href="https://github.com/Ryjen1/WageShield"
+          variant="ghost"
+          arrow={false}
+        >
+          Source on GitHub ↗
+        </PillButton>
+      </div>
+    </section>
+  );
+}
