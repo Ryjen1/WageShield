@@ -43,3 +43,15 @@ Thumbs.db
 # Tooling caches
 .eslintcache
 .prettiercache
+
+# --------------------------------------------------------------------------------
+#  PRIVATE — internal-only material, NEVER push these
+# --------------------------------------------------------------------------------
+#  Anything inside docs/demo/, docs/private/, docs/internal/ is excluded so a
+#  draft script, talking points, or pitch notes can't accidentally end up on
+#  GitHub. Keep these for your own reference only; the canonical copy of the
+#  demo script lives at ~/Documents/wageshield-demo-script.md.
+docs/demo/
+docs/private/
+docs/internal/
+*.private.md
