@@ -9,7 +9,7 @@ import {
 } from "@wageshield/sdk";
 import { useCofheClient } from "@/hooks/useCofheClient";
 import { getAppConfig } from "@/lib/config";
-import { getEthersProvider } from "@/lib/ethers-bridge";
+import { useEthersSigner } from "@/lib/ethers-bridge";
 import { Eyebrow } from "@/components/primitives/Eyebrow";
 import { PillButton } from "@/components/primitives/PillButton";
 
@@ -28,6 +28,7 @@ export default function AttorneyPage() {
   const cfg = getAppConfig();
   const { isConnected } = useAccount();
   const { client, connecting, error: cofheError } = useCofheClient();
+  const ethersBridge = useEthersSigner();
   const [claimIdInput, setClaimIdInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,7 +41,7 @@ export default function AttorneyPage() {
     setBusy(true);
     try {
       const claimId = BigInt(claimIdInput);
-      const provider = getEthersProvider();
+      const provider = await ethersBridge.getProvider();
       const meta = await readClaimMeta({ provider, wageClaimAddress: cfg.wageClaim, claimId });
       const decrypted = await decryptHoursAndRate({ client, provider, wageClaimAddress: cfg.wageClaim, claimId });
       setClaim({

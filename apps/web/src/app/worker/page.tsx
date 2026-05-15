@@ -15,7 +15,7 @@ import {
 import { useCofheClient } from "@/hooks/useCofheClient";
 import { useAccount } from "wagmi";
 import { getAppConfig } from "@/lib/config";
-import { getEthersProvider, getEthersSigner } from "@/lib/ethers-bridge";
+import { useEthersSigner } from "@/lib/ethers-bridge";
 import { Eyebrow } from "@/components/primitives/Eyebrow";
 import { PillButton } from "@/components/primitives/PillButton";
 
@@ -39,6 +39,7 @@ export default function WorkerPage() {
   const cfg = getAppConfig();
   const { isConnected } = useAccount();
   const { client, connecting, error: cofheError } = useCofheClient();
+  const ethersBridge = useEthersSigner();
 
   const [form, setForm] = useState<FormState>(DEFAULT_FORM);
   const [busy, setBusy] = useState<string | null>(null);
@@ -54,7 +55,7 @@ export default function WorkerPage() {
     setError(null);
     setBusy("attestation");
     try {
-      const signer = await getEthersSigner();
+      const signer = await ethersBridge.getSigner();
       const workerAddress = await signer.getAddress();
       const periodStartUnix = Math.floor(new Date(form.periodStart).getTime() / 1000);
       const periodEndUnix = Math.floor(new Date(form.periodEnd).getTime() / 1000);
@@ -104,7 +105,7 @@ export default function WorkerPage() {
     setError(null);
     setBusy("submit");
     try {
-      const signer = await getEthersSigner();
+      const signer = await ethersBridge.getSigner();
       const r = await submitClaim({
         client,
         signer,
@@ -124,7 +125,7 @@ export default function WorkerPage() {
     setError(null);
     setBusy("decrypt");
     try {
-      const provider = getEthersProvider();
+      const provider = await ethersBridge.getProvider();
       const owed = await decryptOwed({
         client,
         provider,
@@ -144,7 +145,7 @@ export default function WorkerPage() {
     setError(null);
     setBusy("grant");
     try {
-      const signer = await getEthersSigner();
+      const signer = await ethersBridge.getSigner();
       const tx = await sdkGrantAttorneyAccess({
         signer,
         wageClaimAddress: cfg.wageClaim,

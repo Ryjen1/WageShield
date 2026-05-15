@@ -12,7 +12,7 @@ import {
 } from "@wageshield/sdk";
 import { useCofheClient } from "@/hooks/useCofheClient";
 import { getAppConfig } from "@/lib/config";
-import { getEthersProvider, getEthersSigner } from "@/lib/ethers-bridge";
+import { useEthersSigner } from "@/lib/ethers-bridge";
 import { Eyebrow } from "@/components/primitives/Eyebrow";
 import { PillButton } from "@/components/primitives/PillButton";
 
@@ -20,6 +20,7 @@ export default function RegulatorPage() {
   const cfg = getAppConfig();
   const { isConnected } = useAccount();
   const { client, connecting, error: cofheError } = useCofheClient();
+  const ethersBridge = useEthersSigner();
 
   const [employerLabel, setEmployerLabel] = useState("EIN-12-3456789");
   const [busy, setBusy] = useState<string | null>(null);
@@ -35,7 +36,7 @@ export default function RegulatorPage() {
     setError(null);
     setBusy("request");
     try {
-      const signer = await getEthersSigner();
+      const signer = await ethersBridge.getSigner();
       const tx = await sdkRequestAggregateDecryption({
         signer,
         wageClaimAddress: cfg.wageClaim,
@@ -58,7 +59,7 @@ export default function RegulatorPage() {
     setError(null);
     setBusy("decrypt");
     try {
-      const provider = getEthersProvider();
+      const provider = await ethersBridge.getProvider();
       const wageClaim = new ethers.Contract(cfg.wageClaim, WAGECLAIM_ABI, provider);
       const count: bigint = await wageClaim.employerClaimCount(employerCommitment);
       setClaimCount(count);
