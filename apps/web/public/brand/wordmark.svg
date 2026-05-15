@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 64" role="img" aria-label="WageShield">
+  <title>WageShield</title>
+  <!--
+    Editorial wordmark. Geometric mono caps, wide tracking. The lockup is
+    designed to read at small sizes (28px on the nav pill) and large sizes
+    (the banner). Set in Geist Mono / JetBrains Mono via the user's system
+    font fallback; the SVG hard-codes 'JetBrains Mono' so the file renders
+    identically without depending on installed fonts.
+  -->
+  <text
+    x="0"
+    y="44"
+    font-family="'JetBrains Mono', ui-monospace, Menlo, 'Cascadia Code', monospace"
+    font-weight="500"
+    font-size="36"
+    letter-spacing="6"
+    fill="currentColor"
+  >WAGESHIELD</text>
+</svg>

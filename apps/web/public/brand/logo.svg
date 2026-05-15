@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 80" role="img" aria-label="WageShield" fill="none">
+  <title>WageShield</title>
+  <!-- Full lockup: mark + wordmark, both inheriting currentColor for theme-agnostic rendering. -->
+  <g transform="translate(0 8)">
+    <circle cx="32" cy="32" r="29" stroke="currentColor" stroke-width="1.6"/>
+    <path d="M16 22 L23.5 44 L32 28 L40.5 44 L48 22" stroke="currentColor" stroke-width="1.6" stroke-linejoin="miter" stroke-linecap="square"/>
+    <rect x="11" y="31" width="42" height="2.5" fill="currentColor"/>
+  </g>
+  <text
+    x="84"
+    y="52"
+    font-family="'JetBrains Mono', ui-monospace, Menlo, 'Cascadia Code', monospace"
+    font-weight="500"
+    font-size="36"
+    letter-spacing="6"
+    fill="currentColor"
+  >WAGESHIELD</text>
+</svg>
