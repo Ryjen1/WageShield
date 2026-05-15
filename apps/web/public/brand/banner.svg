@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 500" role="img" aria-label="WageShield">
+  <title>WageShield — Recover stolen wages, without revealing identity.</title>
+  <defs>
+    <radialGradient id="halo" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.05)"/>
+      <stop offset="60%" stop-color="rgba(255,255,255,0.01)"/>
+      <stop offset="100%" stop-color="rgba(0,0,0,0)"/>
+    </radialGradient>
+    <pattern id="grid" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
+      <circle cx="20" cy="20" r="0.6" fill="rgba(255,255,255,0.08)"/>
+    </pattern>
+  </defs>
+
+  <!-- Background: near-black with faint halo + dot grid -->
+  <rect width="1500" height="500" fill="#07080D"/>
+  <rect width="1500" height="500" fill="url(#grid)"/>
+  <circle cx="750" cy="250" r="420" fill="url(#halo)"/>
+
+  <!-- Eyebrow micro-label -->
+  <text
+    x="120"
+    y="140"
+    font-family="'JetBrains Mono', ui-monospace, monospace"
+    font-weight="400"
+    font-size="14"
+    letter-spacing="4.5"
+    fill="#8B91A3"
+  >CONFIDENTIAL WAGE-THEFT CLAIMS · FHENIX COFHE</text>
+
+  <!-- Headline. "identity." in italic serif via Instrument Serif (with Georgia fallback) -->
+  <text
+    x="120"
+    y="240"
+    font-family="Inter, system-ui, sans-serif"
+    font-weight="500"
+    font-size="68"
+    letter-spacing="-1.6"
+    fill="#F6F7F9"
+  >Recover stolen wages,</text>
+  <text
+    x="120"
+    y="320"
+    font-family="Inter, system-ui, sans-serif"
+    font-weight="500"
+    font-size="68"
+    letter-spacing="-1.6"
+    fill="#F6F7F9"
+  >without revealing <tspan font-family="'Instrument Serif', Georgia, serif" font-style="italic" font-weight="400">identity.</tspan></text>
+
+  <!-- Sub -->
+  <text
+    x="120"
+    y="380"
+    font-family="Inter, system-ui, sans-serif"
+    font-weight="400"
+    font-size="20"
+    fill="#8B91A3"
+  >A privacy-by-design claims layer on Fhenix CoFHE · Live on Arbitrum Sepolia</text>
+
+  <!-- Right side: mark, large, faint -->
+  <g transform="translate(1180 130) scale(4)" fill="none" opacity="0.85">
+    <circle cx="32" cy="32" r="29" stroke="#F6F7F9" stroke-width="1.2"/>
+    <path d="M16 22 L23.5 44 L32 28 L40.5 44 L48 22" stroke="#F6F7F9" stroke-width="1.2" stroke-linejoin="miter" stroke-linecap="square"/>
+    <rect x="11" y="31" width="42" height="2.5" fill="#F6F7F9"/>
+  </g>
+
+  <!-- Bottom-left receipt fragment — adds 'classified document' texture -->
+  <g font-family="'JetBrains Mono', ui-monospace, monospace" font-size="11" fill="#3a4254" opacity="0.6">
+    <text x="120" y="448">claimId            : 4721</text>
+    <text x="120" y="464">employerCommitment : 0xa46e...b3f2</text>
+    <text x="120" y="480">owedCents          : 0x████████</text>
+  </g>
+</svg>
