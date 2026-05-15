@@ -198,6 +198,31 @@ nonce     : ${signedAttestation.attestation.nonce}`}
           calls submitClaim on Fhenix CoFHE. The contract computes encrypted
           owed = hours × rate via FHE.mul.
         </p>
+
+        {/* Status diagnostic — explicit reason the button is/isn't ready. */}
+        <div className="font-mono text-[10px] tracking-[0.2em] uppercase space-y-1 text-muted-foreground">
+          <div>
+            attestation: {signedAttestation ? <span className="text-evidence-400">ready ✓</span> : <span className="text-alarm-500">missing — click Step 1</span>}
+          </div>
+          <div>
+            cofhe client: {client ? (
+              <span className="text-evidence-400">ready ✓</span>
+            ) : connecting ? (
+              <span className="text-amber-400">connecting…</span>
+            ) : cofheError ? (
+              <span className="text-alarm-500" title={cofheError}>error — see hint below</span>
+            ) : (
+              <span className="text-alarm-500">not ready</span>
+            )}
+          </div>
+        </div>
+
+        {cofheError && (
+          <div className="rounded-2xl border border-alarm-500/40 bg-alarm-500/10 px-4 py-3 text-xs text-alarm-500 leading-relaxed font-mono">
+            {cofheError}
+          </div>
+        )}
+
         <PillButton onClick={handleSubmit} disabled={busy !== null || !signedAttestation || !client} variant="primary">
           {busy === "submit" ? "Encrypting + submitting…" : "Encrypt and submit"}
         </PillButton>
