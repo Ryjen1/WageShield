@@ -3,7 +3,6 @@
   "version": "0.1.0",
   "private": true,
   "description": "Mock timeclock issuer service. Signs EIP-712 TimeclockAttestation structs the way a real Homebase / 7shifts / worker-center co-op signer would.",
-  "type": "module",
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",

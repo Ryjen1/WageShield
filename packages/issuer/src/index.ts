@@ -31,8 +31,7 @@ import morgan from "morgan";
 import { ethers } from "ethers";
 import { z } from "zod";
 import { readFileSync, existsSync } from "node:fs";
-import { fileURLToPath } from "node:url";
-import { dirname, resolve } from "node:path";
+import { resolve } from "node:path";
 import { config as dotenvConfig } from "dotenv";
 import {
   buildAttestation,
@@ -46,9 +45,9 @@ import {
 //  Env loading — auto-discover the monorepo root and load .env.local / .env from it
 // --------------------------------------------------------------------------------
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-// packages/issuer/src/index.ts -> repo root is two dirs up from packages/issuer/
+// `__dirname` is provided by CJS at runtime; tsx wires this up automatically for
+// .ts files that aren't part of an ESM package. packages/issuer/src/index.ts
+// resolves to the repo root two levels up.
 const repoRoot = resolve(__dirname, "..", "..", "..");
 for (const file of [".env.local", ".env"]) {
   const p = resolve(repoRoot, file);
