@@ -38,7 +38,8 @@ const DEFAULT_FORM: FormState = {
 export default function WorkerPage() {
   const cfg = getAppConfig();
   const { isConnected } = useAccount();
-  const { client, connecting, error: cofheError } = useCofheClient();
+  const { client, connecting, error: cofheError, reason: cofheReason } =
+    useCofheClient();
   const ethersBridge = useEthersSigner();
 
   const [form, setForm] = useState<FormState>(DEFAULT_FORM);
@@ -212,7 +213,7 @@ nonce     : ${signedAttestation.attestation.nonce}`}
             ) : cofheError ? (
               <span className="text-alarm-500" title={cofheError}>error — see hint below</span>
             ) : (
-              <span className="text-alarm-500">not ready</span>
+              <span className="text-alarm-500">{cofheReason}</span>
             )}
           </div>
         </div>
