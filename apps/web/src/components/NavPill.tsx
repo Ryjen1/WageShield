@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { WalletPill } from "./WalletPill";
 
@@ -25,15 +24,8 @@ export function NavPill() {
         <Link
           href="/"
           aria-label="WageShield home"
-          className="flex items-center gap-2 shrink-0"
+          className="shrink-0"
         >
-          <Image
-            src="/brand/mark.svg"
-            alt=""
-            width={22}
-            height={22}
-            priority
-          />
           <span className="font-mono text-xs tracking-[0.3em] uppercase text-foreground">
             WageShield
           </span>
