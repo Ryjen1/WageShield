@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" width="180" height="180">
+  <!-- Dark rounded square + the mark centered on it, scaled up -->
+  <rect width="180" height="180" rx="36" fill="#07080D"/>
+  <g transform="translate(45 45) scale(1.41)" fill="none">
+    <circle cx="32" cy="32" r="29" stroke="#F6F7F9" stroke-width="2"/>
+    <path d="M16 22 L23.5 44 L32 28 L40.5 44 L48 22" stroke="#F6F7F9" stroke-width="2" stroke-linejoin="miter" stroke-linecap="square"/>
+    <rect x="11" y="31" width="42" height="2.8" fill="#F6F7F9"/>
+  </g>
+</svg>

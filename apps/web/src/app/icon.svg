@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!--
+    Favicon variant: same mark, slightly thicker strokes for legibility at 16-32px,
+    fill="#F6F7F9" (foreground on dark) so it survives on browser tab dark themes.
+  -->
+  <circle cx="32" cy="32" r="29" stroke="#F6F7F9" stroke-width="2.5"/>
+  <path d="M16 22 L23.5 44 L32 28 L40.5 44 L48 22" stroke="#F6F7F9" stroke-width="2.5" stroke-linejoin="miter" stroke-linecap="square"/>
+  <rect x="11" y="31" width="42" height="3" fill="#F6F7F9"/>
+</svg>

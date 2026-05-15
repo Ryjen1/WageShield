@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { WalletPill } from "./WalletPill";
+import { Mark } from "./primitives/Mark";
 
 const TABS = [
   { href: "/worker", label: "Worker" },
@@ -24,9 +25,10 @@ export function NavPill() {
         <Link
           href="/"
           aria-label="WageShield home"
-          className="shrink-0"
+          className="flex items-center gap-2.5 shrink-0 text-foreground"
         >
-          <span className="font-mono text-xs tracking-[0.3em] uppercase text-foreground">
+          <Mark className="h-5 w-5" />
+          <span className="font-mono text-xs tracking-[0.3em] uppercase">
             WageShield
           </span>
         </Link>
