@@ -58,7 +58,10 @@ for (const file of [".env.local", ".env"]) {
 //  Config
 // --------------------------------------------------------------------------------
 
-const PORT = Number(process.env.ISSUER_PORT ?? 4001);
+// Host providers (Render, Railway, Fly.io, etc.) inject the public-facing port
+// as PORT; honour that first, then fall back to our project-specific override,
+// then the local dev default 4001.
+const PORT = Number(process.env.PORT ?? process.env.ISSUER_PORT ?? 4001);
 const ISSUER_PK = process.env.ISSUER_PRIVATE_KEY ?? "";
 const NETWORK = process.env.NETWORK ?? "arb-sepolia";
 const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN ?? "*";
