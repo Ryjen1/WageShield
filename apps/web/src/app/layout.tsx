@@ -6,6 +6,9 @@ import { CursorSpotlight } from "@/components/primitives/CursorSpotlight";
 import { inter, instrumentSerif, geistMono } from "@/lib/fonts";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL ?? "https://wageshield.vercel.app",
+  ),
   title: {
     default: "WageShield — Recover stolen wages",
     template: "%s · WageShield",
