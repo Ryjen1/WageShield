@@ -24,6 +24,42 @@ import type {
 import type { WageShieldClient } from "./client";
 
 /**
+ * Build EIP-1559 fee overrides bumped 25% above the network's current estimate.
+ *
+ * Arbitrum Sepolia's base fee fluctuates by tiny amounts between blocks, and
+ * MetaMask sometimes caches a slightly-stale estimate from before our tx hit the
+ * mempool — by the time the user clicks Confirm, the cached `maxFeePerGas` can
+ * be 2,000 wei below the new `baseFee` and the tx gets rejected with the
+ * inscrutable `max fee per gas less than block base fee` RPC error. Bumping
+ * 25% above wagmi/ethers' own estimate buys enough headroom that this stops
+ * happening without overpaying (testnet ETH is free; the absolute cost is
+ * still sub-cent on L2).
+ *
+ * Returns `undefined` (i.e. no overrides) on networks that don't expose
+ * EIP-1559 fee data, letting ethers fall back to its default legacy `gasPrice`.
+ */
+async function bumpedFeeOverrides(
+  runner: ethers.ContractRunner | null,
+): Promise<{ maxFeePerGas?: bigint; maxPriorityFeePerGas?: bigint } | undefined> {
+  try {
+    const provider = runner && "provider" in runner ? runner.provider : runner;
+    if (!provider || typeof (provider as any).getFeeData !== "function") return undefined;
+    const fee = await (provider as ethers.Provider).getFeeData();
+    if (fee.maxFeePerGas == null) return undefined;
+    return {
+      maxFeePerGas: (fee.maxFeePerGas * 125n) / 100n,
+      maxPriorityFeePerGas:
+        fee.maxPriorityFeePerGas != null
+          ? (fee.maxPriorityFeePerGas * 125n) / 100n
+          : undefined,
+    };
+  } catch {
+    // Any RPC failure: skip the override and let ethers/MetaMask handle it.
+    return undefined;
+  }
+}
+
+/**
  * Submit a wage-theft claim against a deployed `WageClaim`. Encrypts the worker's
  * hours + rate via `@cofhe/sdk`, attaches the issuer attestation + signature,
  * sends the transaction, and parses the resulting `ClaimSubmitted` event.
@@ -52,6 +88,7 @@ export async function submitClaim(args: {
     .execute();
 
   const wageClaim = new ethers.Contract(wageClaimAddress, WAGECLAIM_ABI, signer);
+  const fees = await bumpedFeeOverrides(signer);
   const tx = await wageClaim.submitClaim(
     attestation.employerId,
     attestation.hoursWorked,
@@ -63,6 +100,7 @@ export async function submitClaim(args: {
     signature,
     eHours,
     eRate,
+    fees ?? {},
   );
   const receipt = await tx.wait();
   if (!receipt) throw new Error("submitClaim: tx receipt was null");
@@ -215,7 +253,8 @@ export async function grantAttorneyAccess(args: {
 }): Promise<Hex32> {
   const { signer, wageClaimAddress, claimId, attorney } = args;
   const wageClaim = new ethers.Contract(wageClaimAddress, WAGECLAIM_ABI, signer);
-  const tx = await wageClaim.grantAttorneyAccess(claimId, attorney);
+  const fees = await bumpedFeeOverrides(signer);
+  const tx = await wageClaim.grantAttorneyAccess(claimId, attorney, fees ?? {});
   await tx.wait();
   return tx.hash as Hex32;
 }
@@ -232,7 +271,8 @@ export async function requestAggregateDecryption(args: {
 }): Promise<Hex32> {
   const { signer, wageClaimAddress, employerCommitment } = args;
   const wageClaim = new ethers.Contract(wageClaimAddress, WAGECLAIM_ABI, signer);
-  const tx = await wageClaim.requestAggregateDecryption(employerCommitment);
+  const fees = await bumpedFeeOverrides(signer);
+  const tx = await wageClaim.requestAggregateDecryption(employerCommitment, fees ?? {});
   await tx.wait();
   return tx.hash as Hex32;
 }
