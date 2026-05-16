@@ -39,7 +39,7 @@ function HowItWorks() {
     {
       n: "02",
       title: <>Worker encrypts <span className="font-serif italic">on their device</span></>,
-      body: "@cofhe/sdk encrypts hours + rate locally, producing ZK-proven InEuint64 / InEuint32 inputs. Plaintext never leaves the browser.",
+      body: "@cofhe/sdk encrypts hours + rate locally on the worker's device. The encrypted inputs ship with a CoFHE input-validity proof so the contract knows the ciphertext is well-formed. Plaintext never leaves the browser.",
     },
     {
       n: "03",

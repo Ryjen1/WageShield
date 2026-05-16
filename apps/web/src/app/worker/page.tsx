@@ -202,9 +202,9 @@ nonce     : ${signedAttestation.attestation.nonce}`}
 
       <Step n="02" title={<>Encrypt and <span className="font-serif italic">submit on-chain</span></>} dim={!signedAttestation}>
         <p className="text-sm text-muted-foreground leading-relaxed">
-          The SDK encrypts hours + rate via @cofhe/sdk (ZK-proven inputs), then
+          The SDK encrypts hours + rate via @cofhe/sdk on your device, then
           calls submitClaim on Fhenix CoFHE. The contract computes encrypted
-          owed = hours × rate via FHE.mul.
+          owed = hours × rate via FHE.mul, never seeing the plaintext.
         </p>
 
         {/* Status diagnostic — explicit reason the button is/isn't ready. */}
