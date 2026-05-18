@@ -24,34 +24,44 @@ import type {
 import type { WageShieldClient } from "./client";
 
 /**
- * Build EIP-1559 fee overrides bumped 25% above the network's current estimate.
+ * Build EIP-1559 fee overrides bumped above the network's current base fee.
  *
  * Arbitrum Sepolia's base fee fluctuates by tiny amounts between blocks, and
- * MetaMask sometimes caches a slightly-stale estimate from before our tx hit the
- * mempool — by the time the user clicks Confirm, the cached `maxFeePerGas` can
- * be 2,000 wei below the new `baseFee` and the tx gets rejected with the
- * inscrutable `max fee per gas less than block base fee` RPC error. Bumping
- * 25% above wagmi/ethers' own estimate buys enough headroom that this stops
- * happening without overpaying (testnet ETH is free; the absolute cost is
- * still sub-cent on L2).
+ * MetaMask sometimes caches a slightly-stale estimate from before our tx hit
+ * the mempool — by the time the user clicks Confirm, the cached `maxFeePerGas`
+ * can be 2,000 wei below the new `baseFee` and the RPC rejects with the
+ * inscrutable `max fee per gas less than block base fee` error. We compute
+ * fresh fees from the latest block's `baseFeePerGas` and add headroom.
  *
- * Returns `undefined` (i.e. no overrides) on networks that don't expose
- * EIP-1559 fee data, letting ethers fall back to its default legacy `gasPrice`.
+ * Strategy:
+ *   1. Read the latest block's baseFeePerGas via eth_getBlockByNumber (always
+ *      supported, doesn't require eth_maxPriorityFeePerGas which some MetaMask
+ *      wallet RPC shims refuse).
+ *   2. maxPriorityFeePerGas = 1 gwei (sensible L2 tip; cheap enough not to
+ *      matter; high enough not to get stuck).
+ *   3. maxFeePerGas = baseFeePerGas * 2 + maxPriorityFeePerGas (the standard
+ *      EIP-1559 ceiling — protects against several blocks of doubling base
+ *      fee plus the tip).
+ *
+ * On any failure (provider missing, RPC error, non-EIP-1559 chain), return
+ * `undefined` so ethers / MetaMask handle estimation themselves.
  */
 async function bumpedFeeOverrides(
   runner: ethers.ContractRunner | null,
 ): Promise<{ maxFeePerGas?: bigint; maxPriorityFeePerGas?: bigint } | undefined> {
   try {
     const provider = runner && "provider" in runner ? runner.provider : runner;
-    if (!provider || typeof (provider as any).getFeeData !== "function") return undefined;
-    const fee = await (provider as ethers.Provider).getFeeData();
-    if (fee.maxFeePerGas == null) return undefined;
+    if (!provider || typeof (provider as any).getBlock !== "function") return undefined;
+
+    const block = await (provider as ethers.Provider).getBlock("latest");
+    if (!block || block.baseFeePerGas == null) return undefined;
+
+    const priorityFee = 1_000_000_000n; // 1 gwei
+    const maxFee = block.baseFeePerGas * 2n + priorityFee;
+
     return {
-      maxFeePerGas: (fee.maxFeePerGas * 125n) / 100n,
-      maxPriorityFeePerGas:
-        fee.maxPriorityFeePerGas != null
-          ? (fee.maxPriorityFeePerGas * 125n) / 100n
-          : undefined,
+      maxFeePerGas: maxFee,
+      maxPriorityFeePerGas: priorityFee,
     };
   } catch {
     // Any RPC failure: skip the override and let ethers/MetaMask handle it.

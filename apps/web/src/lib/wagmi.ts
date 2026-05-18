@@ -13,6 +13,12 @@
  * wagmi v2 but we set it for clarity) and DO NOT add the bare `injected()`
  * connector, because that would re-add the "grab window.ethereum and hope" path
  * we're trying to escape.
+ *
+ * Auto-reconnect is intentionally disabled (`storage: null`). wagmi's default is
+ * to remember the last-used connector in localStorage and silently reconnect on
+ * page load. For a privacy product where the user might be on a shared/coerced
+ * device, that's the wrong default — the user must explicitly click Connect each
+ * session.
  */
 
 "use client";
@@ -24,6 +30,7 @@ export const wagmiConfig = createConfig({
   chains: [arbitrumSepolia, sepolia, baseSepolia],
   multiInjectedProviderDiscovery: true,
   connectors: [],
+  storage: null,
   transports: {
     [arbitrumSepolia.id]: http(),
     [sepolia.id]: http(),
