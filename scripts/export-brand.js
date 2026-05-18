@@ -32,9 +32,14 @@ function themed(srcPath, color) {
 
 /** [source SVG (themed if `color` set), output PNG, width, height, color?] */
 const targets = [
-  // Square icons — used as project avatar in AKINDO / GitHub / Twitter.
+  // Mark-only icons — minimal monochrome glyph on transparent. Useful when AKINDO
+  // / favicon contexts want just the symbol.
   [path.join(BRAND, "mark.svg"), path.join(BRAND, "icon-512.png"), 512, 512, "#F6F7F9"],
   [path.join(BRAND, "mark.svg"), path.join(BRAND, "icon-1024.png"), 1024, 1024, "#F6F7F9"],
+  // Avatar (square, mark + wordmark on dark background). Preferred for AKINDO
+  // submission gallery — reads better than the bare mark at gallery thumb size.
+  [path.join(BRAND, "avatar-square.svg"), path.join(BRAND, "avatar-512.png"), 512, 512],
+  [path.join(BRAND, "avatar-square.svg"), path.join(BRAND, "avatar-1024.png"), 1024, 1024],
   // Banner — AKINDO cover, GitHub social preview, Twitter banner.
   [path.join(BRAND, "banner.svg"), path.join(BRAND, "banner-1500x500.png"), 1500, 500],
   [path.join(BRAND, "banner.svg"), path.join(BRAND, "banner-1280x640.png"), 1280, 640],
