@@ -85,28 +85,41 @@ function HowItWorks() {
 function WhyFHE() {
   return (
     <section className="mx-auto max-w-3xl space-y-6">
-      <Eyebrow>Why FHE specifically</Eyebrow>
+      <Eyebrow>Why Fhenix</Eyebrow>
       <h2 className="text-3xl sm:text-4xl font-medium tracking-tight">
-        Cross-worker aggregation breaks <span className="font-serif italic">every other privacy primitive.</span>
+        Many workers, one encrypted total, <span className="font-serif italic">no coordination required.</span>
       </h2>
       <div className="space-y-4 text-base text-muted-foreground leading-relaxed">
         <p>
-          ZK proves a fact to a verifier without revealing the witness — but it
-          requires a joint proof from every contributor. Workers submit claims
-          asynchronously, across weeks, across jurisdictions. There is no
-          coordinated moment to produce a joint ZK proof.
+          The hard problem isn't keeping one claim secret. It's letting many
+          workers contribute independently to a per-employer exposure figure
+          that a regulator can query, while no worker ever sees any other
+          worker's claim, and the chain operator sees none of them at all.
         </p>
         <p>
-          TEE-based privacy outsources trust to a hardware vendor's attestation
-          chain and an off-chain enclave operator. The moment that operator is
-          subpoenaed, every worker's plaintext leaks retroactively.
+          Fhenix CoFHE handles this directly. Each worker encrypts their hours
+          and rate on their own device. The contract computes{" "}
+          <code className="font-mono text-foreground bg-white/[0.06] px-1.5 py-0.5 rounded">
+            owed = hours × rate
+          </code>{" "}
+          via{" "}
+          <code className="font-mono text-foreground bg-white/[0.06] px-1.5 py-0.5 rounded">
+            FHE.mul
+          </code>{" "}
+          on the encrypted handles, then folds each new claim into a per-employer
+          encrypted aggregate via{" "}
+          <code className="font-mono text-foreground bg-white/[0.06] px-1.5 py-0.5 rounded">
+            FHE.add
+          </code>
+          . The aggregate is a single ciphertext that grows as more workers
+          submit — no coordination between them required.
         </p>
         <p>
-          FHE keeps the data encrypted <em>while it's being computed on</em>. The
-          per-employer aggregate is computed as <code className="font-mono text-foreground bg-white/[0.06] px-1.5 py-0.5 rounded">FHE.add</code> across
-          each worker's independently-submitted ciphertext. No joint proof. No
-          shared enclave. No vendor attestation. The trust assumption is "FHE
-          soundness holds" — that's it.
+          Decryption is permit-gated and role-scoped. The worker decrypts their
+          own claim. The attorney decrypts only the claims their client
+          authorised. The regulator decrypts only the aggregate, never the
+          components. The chain itself sees nothing. The trust assumption is
+          "FHE soundness holds" — that's it.
         </p>
       </div>
     </section>

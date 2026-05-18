@@ -14,7 +14,7 @@ artifact a judge or reviewer needs to verify it themselves.
 | CoFHE environment | `TESTNET` |
 | CoFHE coprocessor | `https://testnet-cofhe.fhenix.zone` |
 | Threshold network | `https://testnet-cofhe-tn.fhenix.zone` |
-| ZK verifier | `https://testnet-cofhe-vrf.fhenix.zone` |
+| Input verifier | `https://testnet-cofhe-vrf.fhenix.zone` |
 
 ## Deployed contracts
 
@@ -101,8 +101,10 @@ Expected output:
 
 1. **The issuer EIP-712 attestation flow works.** A trusted timeclock signer can vouch
    for a worker's hours/rate without that data hitting the chain in plaintext.
-2. **`@cofhe/sdk` encrypts client-side and ships a ZK proof** to the testnet ZK
-   verifier (`prove` → `verify` steps in the log).
+2. **`@cofhe/sdk` encrypts client-side and ships an input-validity proof** to the
+   testnet input verifier (`prove` → `verify` steps in the log). The proof shows
+   the ciphertext is well-formed and the submitter knows the plaintext, so the
+   contract can safely accept it.
 3. **`FHE.mul(eHours, eRateCents)` runs on-chain inside the CoFHE coprocessor** — the
    encrypted owed amount is computed without ever decrypting the inputs.
 4. **CoFHE permits scope decryption to authorized addresses only.** The worker's
@@ -116,8 +118,9 @@ Expected output:
 * **Gas: ~600k for one submission with one FHE.mul + one FHE.add.** Aggregating across
   N claims for a single employer adds ~N × `FHE.add` ops; for N > 30 we'd batch the
   aggregate update off-chain or split across multiple txs.
-* **`encryptInputs` round-trip took ~10s** in this run, due to ZK proving +
-  verifier-network round trip. This is interactive UX for a worker but not free.
+* **`encryptInputs` round-trip took ~10s** in this run, due to the input-validity
+   proving + verifier-network round trip. This is interactive UX for a worker
+   but not free.
 * **Per-receipt CoFHE permit must be re-signed if the worker switches devices** —
   permits are stored per (chainId × account) in the SDK's local store.
 

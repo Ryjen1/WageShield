@@ -94,27 +94,30 @@ aggregates.
 
 ---
 
-## Why FHE specifically
+## Why Fhenix
 
-Most privacy-preserving systems today rely on either **ZK proofs** (which reveal
-the assertion to a verifier) or **TEE-based confidential compute** (which
-outsources trust to a hardware vendor's attestation chain and an off-chain enclave
-operator). Neither composes cleanly with cross-worker aggregation:
+WageShield's hardest design problem isn't keeping a single worker's claim secret
+— it's letting **many workers contribute independently** to a per-employer
+exposure number that **a regulator can query**, while **none of them ever sees
+any other worker's claim**, and **the chain operator sees none of them at all**.
 
-- **ZK** requires a joint proof from every contributor — impossible when workers
-  submit independently across days, weeks, and jurisdictions.
-- **TEE** requires every contributor to trust the same enclave operator with their
-  plaintext. The moment that operator is subpoenaed, the privacy collapses
-  retroactively for every worker who ever submitted.
+Fhenix CoFHE solves this directly:
 
-WageShield's per-employer aggregate is computed as `FHE.add` across each worker's
-independently-submitted ciphertext. No joint proof. No shared enclave. No vendor
-attestation. The chain operator, the contract owner, and every other observer see
-only ciphertexts until a permit holder decrypts off-chain — and even then, only
-their authorised slice.
+- Each worker encrypts their hours and rate on their own device. The plaintext
+  never leaves the browser.
+- `WageClaim.submitClaim` computes `owed = hours × rate` via `FHE.mul` on the
+  encrypted handles. The contract never decrypts.
+- Each new claim is folded into a per-employer encrypted aggregate via
+  `FHE.add`. The aggregate is a single ciphertext that grows as more workers
+  submit — no coordination between them required.
+- Decryption is permit-gated and role-scoped. The worker decrypts their own
+  claim. The attorney decrypts only the claims their client authorised. The
+  regulator decrypts only the aggregate, never the components.
 
-The trust assumption is *"FHE soundness holds"* — that's it. No chip vendor, no
-enclave operator, no off-chain attestation chain.
+The chain operator, the contract owner, and every other observer see only
+ciphertexts until a permit holder decrypts off-chain — and even then, only
+their authorised slice. The trust assumption is *"FHE soundness holds"* —
+that's it.
 
 ---
 

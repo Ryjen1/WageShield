@@ -78,7 +78,7 @@ docs: expand honest-limits with bucket k-anonymity caveat
 ## What's in / out of scope right now
 
 **In scope (Wave 4):** core contract surface, mock-env test coverage, live testnet e2e,
-docs that explain the FHE-vs-TEE upgrade story.
+docs that explain how Fhenix's encrypted compute enables cross-worker aggregation.
 
 **In scope (Wave 5):** TypeScript SDK, web app (3 views), Privara `ConfidentialEscrow`
 end-to-end demo, threat model, honest-limits, NGO/state-AG outreach log, demo video.

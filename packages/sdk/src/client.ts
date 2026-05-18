@@ -14,7 +14,7 @@ import type { SupportedNetwork } from "./types";
 
 /**
  * Map our `SupportedNetwork` strings onto `@cofhe/sdk`'s chain configs. These point
- * at the Fhenix CoFHE testnet coprocessor / threshold network / ZK verifier URLs.
+ * at the Fhenix CoFHE testnet coprocessor / threshold network / input verifier URLs.
  */
 const CHAIN_BY_NETWORK: Record<SupportedNetwork, any> = {
   "arb-sepolia": chains.arbSepolia,

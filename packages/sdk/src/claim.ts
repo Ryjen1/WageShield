@@ -87,7 +87,7 @@ export async function submitClaim(args: {
   const { client, signer, wageClaimAddress, signedAttestation } = args;
   const { attestation, signature } = signedAttestation;
 
-  // Encrypt the plaintext hours + rate. The CoFHE coprocessor returns ZK-proven
+  // Encrypt the plaintext hours + rate. The CoFHE coprocessor returns proven
   // `InEuint*` structs that the contract calls `FHE.asEuint*(...)` on to obtain
   // ciphertext handles.
   const [eHours, eRate] = await client
